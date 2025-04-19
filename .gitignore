@@ -1,1 +1,4 @@
 frontend/node_modules/
+
+# Next.js SWC binaries
+frontend/node_modules/@next/swc-*/next-swc.*.node
