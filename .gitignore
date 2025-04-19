@@ -28,3 +28,4 @@ yarn-error.log*
 
 # Next.js SWC binaries
 frontend/node_modules/@next/swc-*/next-swc.*.node
+frontend/node_modules/@next/swc-darwin-arm64/next-swc.darwin-arm64.node
