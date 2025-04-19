@@ -10,6 +10,9 @@ out/
 .env
 .env.local
 .env.*.local
+.env.development
+.env.test
+.env.production
 
 # Debug logs
 npm-debug.log*
@@ -25,6 +28,29 @@ yarn-error.log*
 .vscode/
 *.swp
 *.swo
+
+# Build files
+dist/
+build/
+*.tsbuildinfo
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+.stylelintcache
+
+# Coverage
+coverage/
+*.lcov
+
+# Misc
+*.log
+*.pid
+*.seed
+*.pid.lock
+.DS_Store
+Thumbs.db
 
 # Next.js SWC binaries
 frontend/node_modules/@next/swc-*/next-swc.*.node
