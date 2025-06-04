@@ -1,0 +1,59 @@
+.holo-vmax {
+    --space: 5%;
+    --angle: 133deg;
+    --imgsize: cover;
+  
+    --sunpillar-clr-1: hsl(2, 100%, 73%);
+    --sunpillar-clr-2: hsl(53, 100%, 69%);
+    --sunpillar-clr-3: hsl(93, 100%, 69%);
+    --sunpillar-clr-4: hsl(176, 100%, 76%);
+    --sunpillar-clr-5: hsl(228, 100%, 74%);
+    --sunpillar-clr-6: hsl(283, 100%, 73%);
+  
+    background-image:
+      url("/img/grain.webp"),
+      url("/img/glitter.png"),
+      repeating-linear-gradient(
+        0deg,
+        var(--sunpillar-clr-1) calc(var(--space)*1),
+        var(--sunpillar-clr-2) calc(var(--space)*2),
+        var(--sunpillar-clr-3) calc(var(--space)*3),
+        var(--sunpillar-clr-4) calc(var(--space)*4),
+        var(--sunpillar-clr-5) calc(var(--space)*5),
+        var(--sunpillar-clr-6) calc(var(--space)*6),
+        var(--sunpillar-clr-1) calc(var(--space)*7)
+      ),
+      repeating-linear-gradient(
+        var(--angle),
+        #0e152e 0%,
+        hsl(180, 10%, 60%) 3.8%,
+        hsl(180, 29%, 66%) 4.5%,
+        hsl(180, 10%, 60%) 5.2%,
+        #0e152e 10%,
+        #0e152e 12%
+      ),
+      radial-gradient(
+        circle at var(--pointer-x, 50%) var(--pointer-y, 50%),
+        hsla(0, 0%, 100%, 0.2) 0%,
+        hsla(0, 0%, 0%, 0.1) 60%,
+        transparent 100%
+      );
+  
+    background-size:
+      cover,        /* grain */
+      25%,          /* glitter */
+      200% 700%,    /* colorful vertical shine */
+      300% 100%,    /* diagonal soft light */
+      200% 100%;    /* radial pointer light */
+  
+    background-blend-mode:
+      exclusion,
+      soft-light,
+      hue,
+      hard-light,
+      screen;
+  
+    filter: brightness(1.1) contrast(1.5) saturate(2.4);
+    transition: background-position 0.2s ease;
+  }
+  
