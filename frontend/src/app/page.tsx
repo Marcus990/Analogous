@@ -2,35 +2,60 @@
 
 import { useState, DragEvent, FormEvent } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
+import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 import { HoloCard } from '@/components/HoloCard';
+import ExplainWords from '@/components/ExplainWords';
+import { LampContainer } from '@/components/LampContainer';
+import { FadeInStagger } from '@/components/FadeInStagger';
+import { MovingBorderButton } from '@/components/MovingBorder';
+import { FollowerPointerCard } from '@/components/FollowingPointer';
 
 export default function Home() {
-  const { topicCard, audienceCard, setTopicCard, setAudienceCard, cards, addCard } = useStore();
+  const router = useRouter();
+  const { user } = useAuth();
+  const {
+    topicCard,
+    audienceCard,
+    setTopicCard,
+    setAudienceCard,
+    cards,
+    addCard,
+  } = useStore();
+
   const [newCard, setNewCard] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedAnalogy, setGeneratedAnalogy] = useState('');
+  const [lampFinished, setLampFinished] = useState(false);
 
   const handleSubmit = async () => {
     if (!topicCard || !audienceCard) return;
-
+    
+    // Check if user is authenticated
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+    
     setIsGenerating(true);
     try {
-      const response = await fetch('http://localhost:5000/generate-analogy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          topic: topicCard,
-          audience: audienceCard,
-        }),
+      const response = await api.generateAnalogy({
+        topic: topicCard,
+        audience: audienceCard,
+        user_id: user.id,
       });
-
-      const data = await response.json();
-      setGeneratedAnalogy(data.analogy);
+      
+      // Redirect to results page with the analogy ID
+      if (response.id) {
+        router.push(`/results/${response.id}`);
+      } else {
+        // Fallback: redirect to results with a temporary ID
+        router.push(`/results/temp-${Date.now()}`);
+      }
     } catch (error) {
       console.error('Error generating analogy:', error);
+      // Handle error - you might want to show a toast notification
     } finally {
       setIsGenerating(false);
     }
@@ -44,126 +69,116 @@ export default function Home() {
     }
   };
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
+  const handleDragOver = (e: DragEvent<HTMLDivElement>) => e.preventDefault();
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>, setCard: (card: string) => void) => {
+  const handleDrop = (
+    e: DragEvent<HTMLDivElement>,
+    setCard: (card: string) => void
+  ) => {
     e.preventDefault();
     const card = e.dataTransfer.getData('text/plain');
     setCard(card);
   };
 
-  const handleDragStart = (e: DragEvent<HTMLDivElement>, card: string, setCard: (card: string | null) => void) => {
+  const handleDragStart = (
+    e: DragEvent<HTMLDivElement>,
+    card: string,
+    clearCard: (card: string | null) => void
+  ) => {
     e.dataTransfer.setData('text/plain', card);
-    setCard(null);
+    clearCard(null);
   };
 
   return (
-    <div className="flex flex-col items-center space-y-8">
-      <h1 className="text-4xl font-bold text-center">
-        Explain to me{' '}
-        <span className="text-purple-400">
-          {topicCard || '[drag topic here]'}
-        </span>{' '}
-        like I'm a{' '}
-        <span className="text-purple-400">
-          {audienceCard || '[drag audience here]'}
-        </span>
-      </h1>
-
-      <div className="grid grid-cols-2 gap-8 w-full max-w-4xl">
-        <div
-          className="h-32 border-2 border-dashed border-purple-400 rounded-lg flex items-center justify-center bg-black/20"
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, setTopicCard)}
-        >
-          {topicCard ? (
-            <HoloCard
-              text={topicCard}
-              className="cursor-move"
-              draggable
-              onDragStart={(e) => handleDragStart(e, topicCard, setTopicCard)}
-            />
-          ) : (
-            <span className="text-gray-400">Drop topic here</span>
-          )}
-        </div>
-
-        <div
-          className="h-32 border-2 border-dashed border-purple-400 rounded-lg flex items-center justify-center bg-black/20"
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, setAudienceCard)}
-        >
-          {audienceCard ? (
-            <HoloCard
-              text={audienceCard}
-              className="cursor-move"
-              draggable
-              onDragStart={(e) => handleDragStart(e, audienceCard, setAudienceCard)}
-            />
-          ) : (
-            <span className="text-gray-400">Drop audience here</span>
-          )}
-        </div>
-      </div>
-
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className={`px-6 py-3 rounded-lg font-medium ${
-          topicCard && audienceCard
-            ? 'bg-purple-600 hover:bg-purple-700'
-            : 'bg-gray-600 cursor-not-allowed'
-        }`}
-        onClick={handleSubmit}
-        disabled={!topicCard || !audienceCard || isGenerating}
-      >
-        {isGenerating ? 'Generating...' : 'Generate Analogy'}
-      </motion.button>
-
-      {generatedAnalogy && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-4xl p-6 bg-black/20 rounded-lg border border-purple-400"
-        >
-          <h2 className="text-xl font-semibold mb-4">Generated Analogy</h2>
-          <p className="text-gray-300">{generatedAnalogy}</p>
-        </motion.div>
-      )}
-
-      <div className="w-full max-w-4xl mt-8">
-        <form onSubmit={handleAddCard} className="flex gap-4">
-          <input
-            type="text"
-            value={newCard}
-            onChange={(e) => setNewCard(e.target.value)}
-            placeholder="Enter a new card..."
-            className="flex-1 px-4 py-2 rounded-lg bg-black/20 border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+    <LampContainer onFinish={() => setLampFinished(true)}>
+      <FadeInStagger delayStart={lampFinished}>
+        <div className="pt-32 px-4 md:px-12 max-w-screen-lg mx-auto">
+          <ExplainWords
+            onDragOver={handleDragOver}
+            onDropTopic={(e) => handleDrop(e, setTopicCard)}
+            onDropAudience={(e) => handleDrop(e, setAudienceCard)}
+            topicCard={topicCard}
+            audienceCard={audienceCard}
+            onDragStartTopic={(e) => {
+              if (topicCard) handleDragStart(e, topicCard, setTopicCard);
+            }}
+            onDragStartAudience={(e) => {
+              if (audienceCard) handleDragStart(e, audienceCard, setAudienceCard);
+            }}
           />
-          <button
-            type="submit"
-            className="px-6 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 font-medium"
-          >
-            Add Card
-          </button>
-        </form>
 
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {cards.map((card: string, index: number) => (
-            <HoloCard
-              key={index}
-              text={card}
-              className="cursor-move"
-              draggable
-              onDragStart={(e: DragEvent<HTMLDivElement>) => {
-                e.dataTransfer.setData('text/plain', card);
-              }}
-            />
-          ))}
+          <div className="mt-12 flex flex-col items-center space-y-8">
+            <div className="my-6">
+              {topicCard && audienceCard ? (
+                <MovingBorderButton
+                  onClick={handleSubmit}
+                  disabled={isGenerating}
+                  borderRadius="0.5rem"
+                  duration={3000}
+                  containerClassName="w-auto h-auto"
+                  borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
+                  className="min-w-[220px] px-8 py-3 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md"
+                >
+                  {isGenerating ? 'Generating...' : 'Generate Analogy'}
+                </MovingBorderButton>
+              ) : (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="min-w-[220px] px-8 py-3 rounded-lg font-medium transition bg-gray-600 cursor-not-allowed border border-white/50 text-white"
+                  disabled
+                >
+                  Generate Analogy
+                </motion.button>
+              )}
+            </div>
+
+            <div className="w-full max-w-4xl mt-8">
+              <form onSubmit={handleAddCard} className="flex gap-4">
+                <input
+                  type="text"
+                  value={newCard}
+                  onChange={(e) => setNewCard(e.target.value)}
+                  placeholder="Enter a new card..."
+                  className="flex-1 px-4 py-2 rounded-lg bg-black/20 border border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+                <MovingBorderButton
+                  type="submit"
+                  borderRadius="0.5rem"
+                  duration={3000}
+                  containerClassName="w-auto h-auto"
+                  borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
+                  className="px-8 py-3 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md"
+                >
+                  Add Card
+                </MovingBorderButton>
+              </form>
+
+              <div className="rounded-lg border border-white/10 bg-white/5 p-6 my-6 ">
+              <div className="pt-6 pb-12 z-[100] grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 relative overflow-hidden">
+                {cards.map((card: string, index: number) => (
+                  <FollowerPointerCard
+                    key={index}
+                    title="Drag & Drop!"
+                    className="w-full h-full"
+                  >
+                    <HoloCard
+                      text={card}
+                      className="cursor-move w-full h-full"
+                      draggable
+                      onDragStart={(e: React.DragEvent<HTMLDivElement>) => {
+                        e.dataTransfer.setData("text/plain", card);
+                      }}
+                    />
+                  </FollowerPointerCard>
+                ))}
+              </div>
+              </div>
+
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </FadeInStagger>
+    </LampContainer>
   );
 }

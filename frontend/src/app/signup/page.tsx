@@ -1,50 +1,50 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
-import { useStore } from '@/lib/store';
+import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 
-export default function Signup() {
-  const router = useRouter();
-  const { setUser } = useStore();
+export default function SignUp() {
+  const { signUp } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const { error: signUpError } = await signUp(email, password);
 
-      if (error) throw error;
-
-      if (data.user) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email!,
-          created_at: data.user.created_at,
-        });
-        router.push('/dashboard');
+      if (signUpError) {
+        setError(signUpError.message);
+      } else {
+        setSuccess('Account created successfully! Please check your email to confirm your account before signing in.');
+        // Clear form
+        setEmail('');
+        setPassword('');
+        setConfirmPassword('');
       }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+    } catch {
+      setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -58,9 +58,9 @@ export default function Signup() {
         className="w-full max-w-md space-y-8 rounded-lg bg-black/20 p-8 shadow-xl"
       >
         <div>
-          <h2 className="text-center text-3xl font-bold">Create an account</h2>
+          <h2 className="text-center text-3xl font-bold">Create account</h2>
           <p className="mt-2 text-center text-gray-400">
-            Join Analogous to start creating analogies
+            Sign up to get started
           </p>
         </div>
 
@@ -68,6 +68,12 @@ export default function Signup() {
           {error && (
             <div className="rounded-md bg-red-500/10 p-4 text-sm text-red-400">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="rounded-md bg-green-500/10 p-4 text-sm text-green-400">
+              {success}
             </div>
           )}
 

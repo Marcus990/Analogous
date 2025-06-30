@@ -1,5 +1,3 @@
-@import "tailwindcss";
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,12 +14,89 @@
   --font-mono: var(--font-geist-mono);
 }
 
-body {
-  background: linear-gradient(to bottom, #000000, #1a0033, #330066);
-  background-attachment: fixed;
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom font faces */
+@font-face {
+  font-family: 'PlantinMTProRegular';
+  src: url('/fonts/PlantinMTProRg.TTF') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlantinMTProItalic';
+  src: url('/fonts/PlantinMTProRgIt.TTF') format('truetype');
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlantinMTProLight';
+  src: url('/fonts/PlantinMTProLight.TTF') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlantinMTProLightItalic';
+  src: url('/fonts/PlantinMTProLightIt.TTF') format('truetype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlantinMTProSemiBold';
+  src: url('/fonts/PlantinMTProSmBd.TTF') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlantinMTProSemiBoldItalic';
+  src: url('/fonts/PlantinMTProSemiBdIt.TTF') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlantinMTProBold';
+  src: url('/fonts/PlantinMTProBold.TTF') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlantinMTProBoldItalic';
+  src: url('/fonts/PlantinMTProBoldIt.TTF') format('truetype');
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PlantinMTProCondensedBold';
+  src: url('/fonts/PlantinMTProCnBd.TTF') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'SansAtwicModernSemiBold';
+  src: url('/fonts/SansAtwicModernSemiBold.otf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'SansAtwicModernReg';
+  src: url('/fonts/SansAtwicModernReg.otf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+html, body {
+  font-family: 'SansAtwicModernReg', sans-serif;
   min-height: 100vh;
+  letter-spacing: -0.05em;
 }
 
 @keyframes sparkle {

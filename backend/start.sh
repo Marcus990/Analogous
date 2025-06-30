@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Exit if any command fails
+set -e
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Run FastAPI using uvicorn
+uvicorn app:app --reload --host 0.0.0.0 --port 8000

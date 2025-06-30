@@ -1,99 +1,136 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { useStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
-import type { Analogy } from '@/lib/supabase';
+import { BackgroundGradient } from '@/components/BackgroundGradient';
+import { HoloCard } from '@/components/HoloCard';
+import { LampContainer } from '@/components/LampContainer';
+import Modal from '@/components/Modal';
+import OnboardingFlow from '@/components/OnboardingFlow';
+import { MovingBorderButton } from '@/components/MovingBorder';
+import { HiOutlineUserCircle, HiOutlineLightBulb } from 'react-icons/hi';
 
-export default function Dashboard() {
+export default function DashboardPage() {
+  const { user, loading } = useAuth();
   const router = useRouter();
-  const { user, analogies, setAnalogies } = useStore();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showReminder, setShowReminder] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
+    if (!loading && !user) {
+      router.replace('/login');
     }
+  }, [user, loading, router]);
 
-    const fetchAnalogies = async () => {
-      try {
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (user) {
         const { data, error } = await supabase
-          .from('analogies')
-          .select('*')
+          .from('personality_answers')
+          .select('id')
           .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
+          .maybeSingle();
 
-        if (error) throw error;
+        const dismissed = sessionStorage.getItem('onboarding-dismissed') === 'true';
 
-        setAnalogies(data as Analogy[]);
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Failed to fetch analogies');
-      } finally {
-        setIsLoading(false);
+        if ((!data || error) && !dismissed) {
+          setShowOnboarding(true);
+        } else if ((!data || error) && dismissed) {
+          setShowReminder(true);
+        }
       }
     };
 
-    fetchAnalogies();
-  }, [user, router, setAnalogies]);
+    checkOnboarding();
+  }, [user]);
 
-  if (!user) return null;
+  if (loading || !user) {
+    return null;
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Your Analogies</h1>
-        <p className="mt-2 text-gray-400">
-          View and manage your past analogies
-        </p>
-      </div>
+    <>
+      {/* Onboarding Modal */}
+      {showOnboarding && (
+        <Modal
+          onClose={() => {
+            sessionStorage.setItem('onboarding-dismissed', 'true');
+            setShowOnboarding(false);
+            setShowReminder(true);
+          }}
+        >
+          <OnboardingFlow
+            onComplete={() => {
+              sessionStorage.setItem('onboarding-dismissed', 'true');
+              setShowOnboarding(false);
+              setShowReminder(false);
+            }}
+          />
+        </Modal>
+      )}
 
-      {error && (
-        <div className="rounded-md bg-red-500/10 p-4 text-sm text-red-400 mb-6">
-          {error}
+      {/* Reminder Bubble */}
+      {showReminder && (
+        <div className="fixed bottom-6 right-6 z-40">
+          <MovingBorderButton
+            onClick={() => {
+              setShowOnboarding(true);
+              setShowReminder(false);
+            }}
+            borderRadius="3rem"
+            duration={3000}
+            containerClassName="w-auto h-auto"
+            borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
+            className="bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md px-4 py-3 font-medium transition"
+          >
+            <HiOutlineUserCircle className="mr-1 text-2xl" /> Getting to Know You
+          </MovingBorderButton>
+
         </div>
       )}
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
-        </div>
-      ) : analogies.length === 0 ? (
-        <div className="text-center py-12">
-          <h3 className="text-lg font-medium text-gray-400">
-            You haven't created any analogies yet
-          </h3>
-          <p className="mt-2 text-gray-500">
-            Head to the home page to create your first analogy
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {analogies.map((analogy: Analogy) => (
-            <motion.div
-              key={analogy.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-black/20 rounded-lg p-6 border border-purple-400"
-            >
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-lg font-medium">
-                    Explain {analogy.topic} like I'm a {analogy.audience}
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-400">
-                    {new Date(analogy.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <p className="text-gray-300">{analogy.analogy_text}</p>
+      <LampContainer>
+        <div className="min-h-screen w-full pt-32 px-6 pb-12 sm:px-10 lg:px-24">
+          <div className="space-y-6">
+            {/* Welcome Section */}
+            <div className="space-y-15">
+              <h1 className="font-bold text-white mb-1 font-[PlantinMTProSemiBold] text-[5.5rem]">
+                Welcome, Name
+              </h1>
+              <p className="text-xl text-gray-400">
+                What would you like to learn today?
+              </p>
+            </div>
+
+            {/* Generate New Analogy Button */}
+            <BackgroundGradient className="w-full rounded-lg cursor-pointer">
+              <button
+                onClick={() => router.push('/')}
+                className="w-full px-6 py-5 text-lg font-semibold text-white text-left flex items-center gap-3"
+              >
+                <HiOutlineLightBulb className="text-3xl" /> Generate New Analogy
+              </button>
+            </BackgroundGradient>
+
+            {/* Previous Analogies Section */}
+            <div className="rounded-lg border border-white/10 bg-white/5 p-6">
+              <h2 className="text-xl font-semibold text-white mb-4">
+                Your Previous Analogies
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((id) => (
+                  <HoloCard
+                    key={id}
+                    text={`Analogy #${id}: A neuron is like a switch in a giant logic machine...`}
+                  />
+                ))}
               </div>
-            </motion.div>
-          ))}
+            </div>
+          </div>
         </div>
-      )}
-    </div>
+      </LampContainer>
+    </>
   );
-} 
+}

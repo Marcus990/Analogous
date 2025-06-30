@@ -3,13 +3,12 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
-import { useStore } from '@/lib/store';
+import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
 
 export default function Login() {
   const router = useRouter();
-  const { setUser } = useStore();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,23 +20,15 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error: signInError } = await signIn(email, password);
 
-      if (error) throw error;
-
-      if (data.user) {
-        setUser({
-          id: data.user.id,
-          email: data.user.email!,
-          created_at: data.user.created_at,
-        });
+      if (signInError) {
+        setError(signInError.message);
+      } else {
         router.push('/dashboard');
       }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'An error occurred');
+    } catch {
+      setError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -111,7 +102,7 @@ export default function Login() {
           </div>
 
           <div className="text-center text-sm">
-            <span className="text-gray-400">Don't have an account? </span>
+            <span className="text-gray-400">Don&apos;t have an account? </span>
             <Link
               href="/signup"
               className="font-medium text-purple-400 hover:text-purple-300"
