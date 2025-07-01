@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 import requests
+import httpx
 import uuid
 from datetime import datetime
 from dotenv import load_dotenv
@@ -15,7 +16,7 @@ load_dotenv()
 
 # Initialize Supabase client
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
-SUPABASE_KEY = os.getenv("NEXT_PUBLIC_SUPABASE_PRIVATE_KEY")
+SUPABASE_KEY = os.getenv("SUPABASE_PRIVATE_KEY")
 supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Initialize FastAPI app
@@ -57,6 +58,13 @@ class GetAnalogyResponse(BaseModel):
     topic: str
     audience: str
     created_at: str
+
+class SignUpRequest(BaseModel):
+    email: str
+    password: str
+    first_name: str
+    last_name: str
+    opt_in_email_marketing: bool
 
 ANALOGY_PROMPT = """
 You are an expert analogy creator whose job is to explain complex topics using vivid, creative analogies tailored to specific audiences.
@@ -114,6 +122,39 @@ Begin writing the analogy now:
 @app.get("/")
 async def home():
     return {"status": "ok", "message": "Analogous API is running"}
+
+
+@app.post("/signup")
+def sign_up_user(payload: SignUpRequest):
+    response = supabase_client.auth.sign_up({
+        "email": payload.email,
+        "password": payload.password,
+    })
+
+    if response.user is None:
+        raise HTTPException(status_code=400, detail="Failed to create user account")
+
+    user_id = response.user.id
+
+    try:
+        insert_response = supabase_client.table("user_information").insert({
+            "id": user_id,
+            "email": payload.email,
+            "first_name": payload.first_name,
+            "last_name": payload.last_name,
+            "onboarding_complete": False,
+            "plan": "free",
+            "opt_in_email_marketing": payload.opt_in_email_marketing,
+        }).execute()
+
+        if not insert_response.data:
+            raise HTTPException(status_code=500, detail="Insert into user_information failed or returned no data")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Supabase insert error: {str(e)}")
+
+    return {"message": "User created successfully"}
+
 
 @app.post("/generate-analogy", response_model=GenerateAnalogyResponse)
 async def generate_analogy(request: GenerateAnalogyRequest):

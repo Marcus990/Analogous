@@ -17,12 +17,33 @@ export default function DashboardPage() {
   const router = useRouter();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
+  const [firstName, setFirstName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    const fetchFirstName = async () => {
+      if (user) {
+        const { data, error } = await supabase
+          .from('user_information')
+          .select('first_name')
+          .eq('id', user.id)
+          .single();
+
+        if (!error && data?.first_name) {
+          setFirstName(data.first_name);
+        } else {
+          console.warn('Failed to fetch first name:', error?.message);
+        }
+      }
+    };
+
+    fetchFirstName();
+  }, [user]);
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -52,7 +73,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      {/* Onboarding Modal */}
       {showOnboarding && (
         <Modal
           onClose={() => {
@@ -71,7 +91,6 @@ export default function DashboardPage() {
         </Modal>
       )}
 
-      {/* Reminder Bubble */}
       {showReminder && (
         <div className="fixed bottom-6 right-6 z-40">
           <MovingBorderButton
@@ -87,7 +106,6 @@ export default function DashboardPage() {
           >
             <HiOutlineUserCircle className="mr-1 text-2xl" /> Getting to Know You
           </MovingBorderButton>
-
         </div>
       )}
 
@@ -97,7 +115,7 @@ export default function DashboardPage() {
             {/* Welcome Section */}
             <div className="space-y-15">
               <h1 className="font-bold text-white mb-1 font-[PlantinMTProSemiBold] text-[5.5rem]">
-                Welcome, Name
+                Welcome{firstName ? `, ${firstName}` : ''}
               </h1>
               <p className="text-xl text-gray-400">
                 What would you like to learn today?

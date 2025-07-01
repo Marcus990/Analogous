@@ -4,12 +4,16 @@ import { useState, FormEvent } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 export default function SignUp() {
   const { signUp } = useAuth();
   const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [optInEmailMarketing, setOptInEmailMarketing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,19 +33,34 @@ export default function SignUp() {
       return;
     }
 
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('First and last names are required');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { error: signUpError } = await signUp(email, password);
-
+      const { error: signUpError } = await signUp(
+        email,
+        password,
+        firstName,
+        lastName,
+        optInEmailMarketing
+      );
+    
       if (signUpError) {
         setError(signUpError.message);
       } else {
-        setSuccess('Account created successfully! Please check your email to confirm your account before signing in.');
-        // Clear form
+        setSuccess(
+          'Account created successfully! Please check your email to confirm your account before signing in.'
+        );
         setEmail('');
+        setFirstName('');
+        setLastName('');
         setPassword('');
         setConfirmPassword('');
+        setOptInEmailMarketing(false);
       }
     } catch {
       setError('An unexpected error occurred');
@@ -59,28 +78,50 @@ export default function SignUp() {
       >
         <div>
           <h2 className="text-center text-3xl font-bold">Create account</h2>
-          <p className="mt-2 text-center text-gray-400">
-            Sign up to get started
-          </p>
+          <p className="mt-2 text-center text-gray-400">Sign up to get started</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-500/10 p-4 text-sm text-red-400">
-              {error}
-            </div>
+            <div className="rounded-md bg-red-500/10 p-4 text-sm text-red-400">{error}</div>
           )}
 
           {success && (
-            <div className="rounded-md bg-green-500/10 p-4 text-sm text-green-400">
-              {success}
-            </div>
+            <div className="rounded-md bg-green-500/10 p-4 text-sm text-green-400">{success}</div>
           )}
 
           <div className="space-y-4">
             <div>
+              <label htmlFor="firstName" className="block text-sm font-medium">
+                First Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                className="mt-1 block w-full rounded-lg bg-black/20 px-4 py-2 border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium">
+                Last Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                className="mt-1 block w-full rounded-lg bg-black/20 px-4 py-2 border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            <div>
               <label htmlFor="email" className="block text-sm font-medium">
-                Email address
+                Email address <span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
@@ -96,7 +137,7 @@ export default function SignUp() {
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium">
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <input
                 id="password"
@@ -112,7 +153,7 @@ export default function SignUp() {
 
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium">
-                Confirm Password
+                Confirm Password <span className="text-red-500">*</span>
               </label>
               <input
                 id="confirmPassword"
@@ -124,6 +165,20 @@ export default function SignUp() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="mt-1 block w-full rounded-lg bg-black/20 px-4 py-2 border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
+            </div>
+
+            <div className="flex items-center">
+              <input
+                id="optInEmailMarketing"
+                name="optInEmailMarketing"
+                type="checkbox"
+                checked={optInEmailMarketing}
+                onChange={(e) => setOptInEmailMarketing(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+              />
+              <label htmlFor="optInEmailMarketing" className="ml-2 block text-sm text-gray-300">
+                I want to receive email updates and news (optional)
+              </label>
             </div>
           </div>
 
@@ -141,10 +196,7 @@ export default function SignUp() {
 
           <div className="text-center text-sm">
             <span className="text-gray-400">Already have an account? </span>
-            <Link
-              href="/login"
-              className="font-medium text-purple-400 hover:text-purple-300"
-            >
+            <Link href="/login" className="font-medium text-purple-400 hover:text-purple-300">
               Sign in
             </Link>
           </div>
@@ -152,4 +204,4 @@ export default function SignUp() {
       </motion.div>
     </div>
   );
-} 
+}
