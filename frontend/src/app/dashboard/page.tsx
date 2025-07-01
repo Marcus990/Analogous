@@ -11,6 +11,7 @@ import Modal from '@/components/Modal';
 import OnboardingFlow from '@/components/OnboardingFlow';
 import { MovingBorderButton } from '@/components/MovingBorder';
 import { HiOutlineUserCircle, HiOutlineLightBulb } from 'react-icons/hi';
+import { motion } from 'framer-motion';
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -110,30 +111,68 @@ export default function DashboardPage() {
       )}
 
       <LampContainer>
-        <div className="min-h-screen w-full pt-32 px-6 pb-12 sm:px-10 lg:px-24">
-          <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+          className="min-h-screen w-full pt-32 px-6 pb-12 sm:px-10 lg:px-24"
+        >
+          <motion.div
+            className="space-y-6"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: {},
+              visible: {
+                transition: {
+                  staggerChildren: 0.15,
+                },
+              },
+            }}
+          >
             {/* Welcome Section */}
-            <div className="space-y-15">
-              <h1 className="font-bold text-white mb-1 font-[PlantinMTProSemiBold] text-[5.5rem]">
-                Welcome{firstName ? `, ${firstName}` : ''}
-              </h1>
-              <p className="text-xl text-gray-400">
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className="space-y-15"
+            >
+              <div className="relative w-fit after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-white">
+                <h1 className="font-bold text-white mb-1 font-[PlantinMTProSemiBold] text-[5.5rem] leading-none">
+                  Welcome{firstName ? `, ${firstName}` : ''}
+                </h1>
+              </div>
+              <p className="mt-[5%] text-xl text-gray-400">
                 What would you like to learn today?
               </p>
-            </div>
+            </motion.div>
 
             {/* Generate New Analogy Button */}
-            <BackgroundGradient className="w-full rounded-lg cursor-pointer">
-              <button
-                onClick={() => router.push('/')}
-                className="w-full px-6 py-5 text-lg font-semibold text-white text-left flex items-center gap-3"
-              >
-                <HiOutlineLightBulb className="text-3xl" /> Generate New Analogy
-              </button>
-            </BackgroundGradient>
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+            >
+              <BackgroundGradient className="w-full rounded-lg cursor-pointer">
+                <button
+                  onClick={() => router.push('/')}
+                  className="w-full px-6 py-5 text-lg font-semibold text-white text-left flex items-center gap-3"
+                >
+                  <HiOutlineLightBulb className="text-3xl" /> Generate New Analogy
+                </button>
+              </BackgroundGradient>
+            </motion.div>
 
             {/* Previous Analogies Section */}
-            <div className="rounded-lg border border-white/10 bg-white/5 p-6">
+            <motion.div
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              className="rounded-lg border border-white/10 bg-white/5 p-6"
+            >
               <h2 className="text-xl font-semibold text-white mb-4">
                 Your Previous Analogies
               </h2>
@@ -145,9 +184,9 @@ export default function DashboardPage() {
                   />
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </LampContainer>
     </>
   );

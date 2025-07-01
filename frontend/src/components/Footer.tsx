@@ -76,7 +76,7 @@ export default function Footer() {
         {/* Bottom Section */}
         <div className="border-t border-white/10 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-400">
-            © 2024 Analogous. All rights reserved.
+            © 2025 Analogous. All rights reserved.
           </p>
           <p className="text-sm text-gray-400 mt-2 md:mt-0">
             Created by <span className="text-white font-medium">Marcus Ng</span>

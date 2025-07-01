@@ -136,12 +136,16 @@ def sign_up_user(payload: SignUpRequest):
 
     user_id = response.user.id
 
+    stripped_email = payload.email.strip()
+    capitalized_first_name = payload.first_name.strip().capitalize()
+    capitalized_last_name = payload.last_name.strip().capitalize()
+
     try:
         insert_response = supabase_client.table("user_information").insert({
             "id": user_id,
-            "email": payload.email,
-            "first_name": payload.first_name,
-            "last_name": payload.last_name,
+            "email": stripped_email,
+            "first_name": capitalized_first_name,
+            "last_name": capitalized_last_name,
             "onboarding_complete": False,
             "plan": "free",
             "opt_in_email_marketing": payload.opt_in_email_marketing,
