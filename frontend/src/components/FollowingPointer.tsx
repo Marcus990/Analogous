@@ -1,5 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence, useMotionValue, useMotionTemplate } from "motion/react";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useMotionTemplate,
+} from "motion/react";
 import { cn } from "@/lib/utils";
 
 export const FollowerPointerCard = ({
@@ -16,22 +21,43 @@ export const FollowerPointerCard = ({
   const ref = React.useRef<HTMLDivElement>(null);
   const [isInside, setIsInside] = useState(false);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  // Cleanup effect to reset hover state when component unmounts
+  useEffect(() => {
+    return () => {
+      // Reset hover state when component unmounts
+      setIsInside(false);
+    };
+  }, []);
+
+  // Reset hover state when component updates
+  useEffect(() => {
+    setIsInside(false);
+  }, [children]);
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (ref.current) {
       const bounds = ref.current.getBoundingClientRect();
-      x.set(e.clientX - bounds.left);
-      y.set(e.clientY - bounds.top);
+      x.set(e.clientX - bounds.left + 10);
+      y.set(e.clientY - bounds.top + 10);
     }
-  };
+  }, [x, y]);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsInside(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsInside(false);
+  }, []);
 
   return (
     <div
       ref={ref}
-      onMouseEnter={() => setIsInside(true)}
-      onMouseLeave={() => setIsInside(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       onMouseMove={handleMouseMove}
       className={cn("relative overflow-visible", className)}
-      style={{ cursor: "none" }}
+      style={{ cursor: "grab" }}
     >
       <AnimatePresence>
         {isInside && <FollowPointer x={x} y={y} title={title} />}
@@ -55,7 +81,7 @@ export const FollowPointer = ({
 
   return (
     <motion.div
-      className="absolute z-[9999] pointer-events-none"
+      className="absolute z-[99999] pointer-events-none"
       style={{ top, left }}
       initial={{ scale: 1, opacity: 1 }}
       animate={{ scale: 1, opacity: 1 }}

@@ -14,105 +14,213 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Hide scrollbar but keep scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* OR, customize instead of hiding: */
+.scrollbar-gray::-webkit-scrollbar {
+  width: 8px;
+}
+.scrollbar-gray::-webkit-scrollbar-track {
+  background: #1f2937; /* Tailwind's gray-800 */
+}
+.scrollbar-gray::-webkit-scrollbar-thumb {
+  background-color: #43464d; /* Tailwind's gray-500 */
+  border-radius: 4px;
+}
+.scrollbar-gray {
+  scrollbar-color: #43464d #1f2937;
+}
+
 /* Custom font faces */
 @font-face {
-  font-family: 'PlantinMTProRegular';
-  src: url('/fonts/PlantinMTProRg.TTF') format('truetype');
+  font-family: "PlantinMTProRegular";
+  src: url("/fonts/PlantinMTProRg.TTF") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PlantinMTProItalic';
-  src: url('/fonts/PlantinMTProRgIt.TTF') format('truetype');
+  font-family: "PlantinMTProItalic";
+  src: url("/fonts/PlantinMTProRgIt.TTF") format("truetype");
   font-weight: normal;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PlantinMTProLight';
-  src: url('/fonts/PlantinMTProLight.TTF') format('truetype');
+  font-family: "PlantinMTProLight";
+  src: url("/fonts/PlantinMTProLight.TTF") format("truetype");
   font-weight: 300;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PlantinMTProLightItalic';
-  src: url('/fonts/PlantinMTProLightIt.TTF') format('truetype');
+  font-family: "PlantinMTProLightItalic";
+  src: url("/fonts/PlantinMTProLightIt.TTF") format("truetype");
   font-weight: 300;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PlantinMTProSemiBold';
-  src: url('/fonts/PlantinMTProSmBd.TTF') format('truetype');
+  font-family: "PlantinMTProSemiBold";
+  src: url("/fonts/PlantinMTProSmBd.TTF") format("truetype");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PlantinMTProSemiBoldItalic';
-  src: url('/fonts/PlantinMTProSemiBdIt.TTF') format('truetype');
+  font-family: "PlantinMTProSemiBoldItalic";
+  src: url("/fonts/PlantinMTProSemiBdIt.TTF") format("truetype");
   font-weight: 600;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PlantinMTProBold';
-  src: url('/fonts/PlantinMTProBold.TTF') format('truetype');
+  font-family: "PlantinMTProBold";
+  src: url("/fonts/PlantinMTProBold.TTF") format("truetype");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PlantinMTProBoldItalic';
-  src: url('/fonts/PlantinMTProBoldIt.TTF') format('truetype');
+  font-family: "PlantinMTProBoldItalic";
+  src: url("/fonts/PlantinMTProBoldIt.TTF") format("truetype");
   font-weight: bold;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
-  font-family: 'PlantinMTProCondensedBold';
-  src: url('/fonts/PlantinMTProCnBd.TTF') format('truetype');
+  font-family: "PlantinMTProCondensedBold";
+  src: url("/fonts/PlantinMTProCnBd.TTF") format("truetype");
   font-weight: bold;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'SansAtwicModernSemiBold';
-  src: url('/fonts/SansAtwicModernSemiBold.otf') format('truetype');
+  font-family: "SansAtwicModernSemiBold";
+  src: url("/fonts/SansAtwicModernSemiBold.otf") format("truetype");
   font-weight: bold;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'SansAtwicModernReg';
-  src: url('/fonts/SansAtwicModernReg.otf') format('truetype');
+  font-family: "SansAtwicModernReg";
+  src: url("/fonts/SansAtwicModernReg.otf") format("truetype");
   font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AdamWarrenPro";
+  src: url("/fonts/adamwarrenpro.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AdamWarrenProBold";
+  src: url("/fonts/adamwarrenpro-bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "AdamWarrenProBoldItalic";
+  src: url("/fonts/adamwarrenpro-bolditalic.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "KomikaHand";
+  src: url("/fonts/KomikaHand.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "KomikaHandBoldItalic";
+  src: url("/fonts/KomikaHandBoldItalic.ttf") format("truetype");
+  font-weight: bold;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NewComicTitle3D";
+  src: url("/fonts/NewComicTitle3D.otf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NewComicTitleLaserRegular";
+  src: url("/fonts/NewComicTitleLaserRegular.otf") format("truetype");
+  font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
-html, body {
-  font-family: 'SansAtwicModernReg', sans-serif;
+html,
+body {
+  font-family: "SansAtwicModernReg", sans-serif;
   min-height: 100vh;
-  letter-spacing: -0.05em;
+  /* letter-spacing: -0.05em; */
 }
 
 @keyframes sparkle {
-  0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1); opacity: 1; }
-  100% { transform: scale(0); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
 }
 
 @keyframes shine {
-  0% { transform: translateX(-100%) rotate(45deg); }
-  100% { transform: translateX(100%) rotate(45deg); }
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
 }
 
 @keyframes moveShine {
-  0% { background-position: 0% 0%; }
-  100% { background-position: 200% 200%; }
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 200%;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

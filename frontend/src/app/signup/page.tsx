@@ -1,40 +1,40 @@
-'use client';
+"use client";
 
-import { useState, FormEvent } from 'react';
-import { motion } from 'framer-motion';
-import { useAuth } from '@/lib/auth';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { useState, FormEvent } from "react";
+import { motion } from "framer-motion";
+import { useAuth } from "@/lib/auth";
+import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 export default function SignUp() {
   const { signUp } = useAuth();
-  const [email, setEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [optInEmailMarketing, setOptInEmailMarketing] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match");
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+      setError("Password must be at least 6 characters long");
       return;
     }
 
     if (!firstName.trim() || !lastName.trim()) {
-      setError('First and last names are required');
+      setError("First and last names are required");
       return;
     }
 
@@ -48,22 +48,22 @@ export default function SignUp() {
         lastName,
         optInEmailMarketing
       );
-    
+
       if (signUpError) {
         setError(signUpError.message);
       } else {
         setSuccess(
-          'Account created successfully! Please check your email to confirm your account before signing in.'
+          "Account created successfully! Please check your email to confirm your account before signing in."
         );
-        setEmail('');
-        setFirstName('');
-        setLastName('');
-        setPassword('');
-        setConfirmPassword('');
+        setEmail("");
+        setFirstName("");
+        setLastName("");
+        setPassword("");
+        setConfirmPassword("");
         setOptInEmailMarketing(false);
       }
     } catch {
-      setError('An unexpected error occurred');
+      setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -78,16 +78,22 @@ export default function SignUp() {
       >
         <div>
           <h2 className="text-center text-3xl font-bold">Create account</h2>
-          <p className="mt-2 text-center text-gray-400">Sign up to get started</p>
+          <p className="mt-2 text-center text-gray-400">
+            Sign up to get started
+          </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-md bg-red-500/10 p-4 text-sm text-red-400">{error}</div>
+            <div className="rounded-md bg-red-500/10 p-4 text-sm text-red-400">
+              {error}
+            </div>
           )}
 
           {success && (
-            <div className="rounded-md bg-green-500/10 p-4 text-sm text-green-400">{success}</div>
+            <div className="rounded-md bg-green-500/10 p-4 text-sm text-green-400">
+              {success}
+            </div>
           )}
 
           <div className="space-y-4">
@@ -152,7 +158,10 @@ export default function SignUp() {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium"
+              >
                 Confirm Password <span className="text-red-500">*</span>
               </label>
               <input
@@ -176,7 +185,10 @@ export default function SignUp() {
                 onChange={(e) => setOptInEmailMarketing(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
               />
-              <label htmlFor="optInEmailMarketing" className="ml-2 block text-sm text-gray-300">
+              <label
+                htmlFor="optInEmailMarketing"
+                className="ml-2 block text-sm text-gray-300"
+              >
                 I want to receive email updates and news (optional)
               </label>
             </div>
@@ -190,13 +202,16 @@ export default function SignUp() {
               disabled={isLoading}
               className="w-full rounded-lg bg-purple-600 px-4 py-2 font-medium text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isLoading ? "Creating account..." : "Create account"}
             </motion.button>
           </div>
 
           <div className="text-center text-sm">
             <span className="text-gray-400">Already have an account? </span>
-            <Link href="/login" className="font-medium text-purple-400 hover:text-purple-300">
+            <Link
+              href="/login"
+              className="font-medium text-purple-400 hover:text-purple-300"
+            >
               Sign in
             </Link>
           </div>

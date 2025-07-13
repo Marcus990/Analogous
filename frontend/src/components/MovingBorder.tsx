@@ -9,7 +9,7 @@ import {
 } from "framer-motion";
 import { useRef } from "react";
 import { cn } from "@/lib/utils";
- 
+
 export function MovingBorderButton({
   borderRadius = "1.75rem",
   children,
@@ -29,12 +29,11 @@ export function MovingBorderButton({
   className?: string;
   [key: string]: any;
 }) {
-    
   return (
     <Component
       className={cn(
-        "relative w-40 overflow-hidden bg-transparent p-[1px] text-xl",
-        containerClassName,
+        "relative w-40 overflow-hidden bg-transparent p-[1px]",
+        containerClassName
       )}
       style={{
         borderRadius: borderRadius,
@@ -49,16 +48,16 @@ export function MovingBorderButton({
           <div
             className={cn(
               "h-20 w-20 bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-[0.8]",
-              borderClassName,
+              borderClassName
             )}
           />
         </MovingBorder>
       </div>
- 
+
       <div
         className={cn(
-          "relative flex h-full w-full items-center justify-center border border-slate-800 bg-slate-900/[0.8] text-sm text-base text-white antialiased backdrop-blur-xl px-8 py-3",
-          className,
+          "relative flex h-full w-full items-center justify-center border border-slate-800 bg-slate-900/[0.8] text-white antialiased backdrop-blur-xl px-8 py-3",
+          className
         )}
         style={{
           borderRadius: `calc(${borderRadius} * 0.96)`,
@@ -69,7 +68,7 @@ export function MovingBorderButton({
     </Component>
   );
 }
- 
+
 export const MovingBorder = ({
   children,
   duration = 3000,
@@ -85,29 +84,29 @@ export const MovingBorder = ({
 }) => {
   const pathRef = useRef<any>("");
   const progress = useMotionValue<number>(0);
- 
+
   useAnimationFrame((time) => {
     const element = pathRef.current;
-  
+
     if (element && typeof element.getTotalLength === "function") {
       const length = element.getTotalLength();
       const pxPerMillisecond = length / duration;
       progress.set((time * pxPerMillisecond) % length);
     }
   });
- 
+
   const x = useTransform(progress, (val) => {
     const element = pathRef.current;
     return element?.getPointAtLength ? element.getPointAtLength(val).x : 0;
   });
-  
+
   const y = useTransform(progress, (val) => {
     const element = pathRef.current;
     return element?.getPointAtLength ? element.getPointAtLength(val).y : 0;
-  });  
- 
+  });
+
   const transform = useMotionTemplate`translateX(${x}px) translateY(${y}px) translateX(-50%) translateY(-50%)`;
- 
+
   return (
     <>
       <svg

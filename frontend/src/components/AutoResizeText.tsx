@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from "react";
 
 interface AutoResizeTextProps {
   text: string;
@@ -13,7 +13,7 @@ export const AutoResizeText = ({
   text,
   minFontSize = 12,
   maxFontSize = 32,
-  className = '',
+  className = "",
 }: AutoResizeTextProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -50,16 +50,16 @@ export const AutoResizeText = ({
 
   return (
     <div
-        ref={containerRef}
-        className={`w-full h-full flex items-center justify-center text-white ${className}`}
-        >
-        <div
-            ref={textRef}
-            style={{ fontSize }}
-            className="w-full text-center px-2 break-words leading-snug inline-block"
-        >
-            {text}
-        </div>
+      ref={containerRef}
+      className={`w-full h-full flex items-center justify-center text-white ${className}`}
+    >
+      <div
+        ref={textRef}
+        style={{ fontSize }}
+        className="w-full text-center px-2 break-words leading-snug inline-block"
+      >
+        {text}
+      </div>
     </div>
   );
 };

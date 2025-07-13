@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import { AuthProvider } from "@/lib/auth";
+import { StreakProvider } from "@/lib/streakContext";
 import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,9 +21,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-black min-h-screen text-white`}>
         <AuthProvider>
-          <Navigation />
-          <main>{children}</main>
-          <Footer />
+          <StreakProvider>
+            <Navigation />
+            <main>{children}</main>
+            <Footer />
+          </StreakProvider>
         </AuthProvider>
       </body>
     </html>

@@ -29,13 +29,16 @@ export const FadeInStagger = ({
       animate="show"
       className="space-y-6"
     >
-      {Array.isArray(children)
-        ? children.map((child, index) => (
-            <motion.div key={index} variants={item}>
-              {child}
-            </motion.div>
-          ))
-        : <motion.div variants={item}>{children}</motion.div>}
+      {" "}
+      {Array.isArray(children) ? (
+        children.map((child, index) => (
+          <motion.div key={index} variants={item}>
+            {child}
+          </motion.div>
+        ))
+      ) : (
+        <motion.div variants={item}>{children}</motion.div>
+      )}
     </motion.div>
   );
 };
