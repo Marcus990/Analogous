@@ -14,6 +14,7 @@ import { api } from "@/lib/api";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import StreakModal from "@/components/StreakModal";
 import { useStreak } from "@/lib/streakContext";
+import { useNotification } from "@/lib/notificationContext";
 import {
   HiOutlineUserCircle,
   HiOutlineLightBulb,
@@ -81,7 +82,7 @@ const TypewriterHeading = () => {
     "high school student",
     "retiree",
     "middle schooler",
-    "kindergarten teacher",
+    "singer",
     "superhero",
     "baseball player",
     "chef",
@@ -366,6 +367,7 @@ interface UserAnalogiesResponse {
 export default function DashboardPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const { showNotification } = useNotification();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showReminder, setShowReminder] = useState(false);
   const [firstName, setFirstName] = useState<string | null>(null);
@@ -378,6 +380,16 @@ export default function DashboardPage() {
   const [analogyToDelete, setAnalogyToDelete] = useState<string | null>(null);
   const { streakData, loadingStreak } = useStreak();
   const [showStreakModal, setShowStreakModal] = useState(false);
+
+  // Helper function to convert relative image URLs to absolute backend URLs
+  const getFullImageUrl = (relativeUrl: string) => {
+    if (relativeUrl.startsWith('http')) {
+      return relativeUrl; // Already absolute
+    }
+    // Convert relative URL to absolute backend URL
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    return `${backendUrl}${relativeUrl}`;
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -572,7 +584,12 @@ export default function DashboardPage() {
       console.log("Analogy deleted successfully");
     } catch (err) {
       console.error("Error deleting analogy:", err);
-      alert("Failed to delete analogy. Please try again.");
+      showNotification({
+        title: "Delete Failed",
+        message: "Failed to delete analogy. Please try again.",
+        type: "error",
+        confirmText: "OK"
+      });
     } finally {
       setDeletingAnalogy(null);
       setAnalogyToDelete(null);
@@ -1027,7 +1044,7 @@ export default function DashboardPage() {
                       onClick={() => handleViewAnalogy(analogy.id)}
                     >
                       <BackgroundGradient containerClassName="rounded-lg p-[2px] h-full">
-                        <div className="bg-black rounded-lg p-6 h-full flex flex-col">
+                        <div className="w-full bg-black rounded-lg p-6 h-full flex flex-col">
                           {/* Header */}
                           <div className="flex items-start justify-between mb-4">
                             <div className="flex-1">
@@ -1070,11 +1087,14 @@ export default function DashboardPage() {
                                     className="w-12 h-12 rounded-md overflow-hidden bg-gray-800 flex-shrink-0"
                                   >
                                     <img
-                                      src={url}
+                                      src={getFullImageUrl(url)}
                                       alt={`Chapter ${imgIndex + 1}`}
                                       className="w-full h-full object-cover"
                                       onError={(e) => {
-                                        e.currentTarget.style.display = "none";
+                                        // Use fallback image instead of hiding
+                                        const fallbackImage = `/static/assets/default_image${imgIndex % 3}.jpeg`;
+                                        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                                        e.currentTarget.src = `${backendUrl}${fallbackImage}`;
                                       }}
                                     />
                                   </div>

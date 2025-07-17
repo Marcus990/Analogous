@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
+import { useNotification } from "@/lib/notificationContext";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import { MovingBorderButton } from "@/components/MovingBorder";
 import { BackgroundGradient } from "@/components/BackgroundGradient";
@@ -47,12 +48,23 @@ interface UserAnalogiesResponse {
 export default function PastAnalogiesPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { showNotification } = useNotification();
   const [analogies, setAnalogies] = useState<AnalogyData[]>([]);
   const [loadingAnalogies, setLoadingAnalogies] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingAnalogy, setDeletingAnalogy] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [analogyToDelete, setAnalogyToDelete] = useState<string | null>(null);
+
+  // Helper function to convert relative image URLs to absolute backend URLs
+  const getFullImageUrl = (relativeUrl: string) => {
+    if (relativeUrl.startsWith('http')) {
+      return relativeUrl; // Already absolute
+    }
+    // Convert relative URL to absolute backend URL
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    return `${backendUrl}${relativeUrl}`;
+  };
 
   useEffect(() => {
     if (!loading && !user) {
@@ -102,7 +114,12 @@ export default function PastAnalogiesPage() {
       console.log("Analogy deleted successfully");
     } catch (err) {
       console.error("Error deleting analogy:", err);
-      alert("Failed to delete analogy. Please try again.");
+      showNotification({
+        title: "Delete Failed",
+        message: "Failed to delete analogy. Please try again.",
+        type: "error",
+        confirmText: "OK"
+      });
     } finally {
       setDeletingAnalogy(null);
       setAnalogyToDelete(null);
@@ -299,7 +316,7 @@ export default function PastAnalogiesPage() {
                   onClick={() => handleViewAnalogy(analogy.id)}
                 >
                   <BackgroundGradient containerClassName="rounded-lg p-[2px] h-full">
-                    <div className="bg-black rounded-lg p-6 h-full flex flex-col">
+                    <div className="w-full bg-black rounded-lg p-6 h-full flex flex-col">
                       {/* Header */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
@@ -339,11 +356,14 @@ export default function PastAnalogiesPage() {
                               className="w-16 h-16 rounded-lg overflow-hidden bg-gray-800 flex-shrink-0"
                             >
                               <img
-                                src={url}
+                                src={getFullImageUrl(url)}
                                 alt={`Chapter ${imgIndex + 1}`}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  e.currentTarget.style.display = "none";
+                                  // Use fallback image instead of hiding
+                                  const fallbackImage = `/static/assets/default_image${imgIndex % 3}.jpeg`;
+                                  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+                                  e.currentTarget.src = `${backendUrl}${fallbackImage}`;
                                 }}
                               />
                             </div>

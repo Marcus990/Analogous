@@ -81,6 +81,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
   };
 
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    console.log(`Successfully loaded image: ${event.currentTarget.src}`);
     try {
       const img = event.currentTarget;
       const canvas = document.createElement("canvas");
@@ -107,6 +108,50 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
       console.warn("Tainted canvas: defaulting to white text");
       // setIsDark(true); // This line was removed
     }
+  };
+
+  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    console.warn(`Failed to load image: ${event.currentTarget.src}`);
+    
+    // Get the appropriate fallback image based on the slide index
+    let fallbackImage = "/static/assets/default_image0.jpeg"; // Default fallback
+    
+    // Map slide indices to fallback images
+    // This matches the backend's fallback mapping:
+    // - Slides 1 & 2 (indices 1,2) → default_image0.jpeg
+    // - Slides 3 & 4 (indices 3,4) → default_image1.jpeg  
+    // - Slides 5 & 6 (indices 5,6) → default_image2.jpeg
+    if (index === 1 || index === 2) {
+      fallbackImage = "/static/assets/default_image0.jpeg";
+    } else if (index === 3 || index === 4) {
+      fallbackImage = "/static/assets/default_image1.jpeg";
+    } else if (index === 5 || index === 6) {
+      fallbackImage = "/static/assets/default_image2.jpeg";
+    }
+    
+    // Convert to full backend URL
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const fullFallbackUrl = `${backendUrl}${fallbackImage}`;
+    
+    // Set the fallback image
+    event.currentTarget.src = fullFallbackUrl;
+  };
+
+  const handleTitlePageImageError = (event: React.SyntheticEvent<HTMLImageElement>, imgIndex: number) => {
+    console.warn(`Failed to load title page image ${imgIndex}: ${event.currentTarget.src}`);
+    
+    // Map imgIndex to fallback images for title page
+    // imgIndex 0 → default_image0.jpeg
+    // imgIndex 1 → default_image1.jpeg
+    // imgIndex 2 → default_image2.jpeg
+    const fallbackImage = `/static/assets/default_image${imgIndex}.jpeg`;
+    
+    // Convert to full backend URL
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const fullFallbackUrl = `${backendUrl}${fallbackImage}`;
+    
+    console.log(`Using fallback for title page image ${imgIndex}: ${fullFallbackUrl}`);
+    event.currentTarget.src = fullFallbackUrl;
   };
 
   const renderBoldOnlyMarkdown = (text: string) => {
@@ -240,6 +285,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                         src={originalSlide.src}
                         alt={`Chapter ${imgIndex + 1}`}
                         className="w-full h-full object-cover"
+                        onError={(e) => handleTitlePageImageError(e, imgIndex)}
                       />
                     </div>
                   ))}
@@ -287,6 +333,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                       src={slide.src}
                       alt="blurred background"
                       className="w-full h-full object-cover object-center"
+                      onError={handleImageError}
                     />
                   </div>
 
@@ -381,6 +428,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                   src={src}
                   alt="story image"
                   onLoad={handleImageLoad}
+                  onError={handleImageError}
                   loading="eager"
                   decoding="sync"
                 />
@@ -495,6 +543,18 @@ export function Carousel({ slides }: CarouselProps) {
   const [current, setCurrent] = useState(0);
   const [carouselSize, setCarouselSize] = useState(0);
   const [containerSize, setContainerSize] = useState(0);
+
+  // Debug: Log the slides data
+  useEffect(() => {
+    console.log("Carousel received slides:", slides);
+    slides.forEach((slide, i) => {
+      console.log(`Slide ${i}:`, {
+        src: slide.src,
+        id: slide.id,
+        analogy: slide.analogy?.title
+      });
+    });
+  }, [slides]);
 
   // Create expanded slides array with blurred versions
   const expandedSlides = [

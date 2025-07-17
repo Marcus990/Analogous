@@ -4,6 +4,9 @@ import { MovingBorderButton } from "./MovingBorder";
 import { BackgroundGradient } from "./BackgroundGradient";
 import { IconX, IconFlame, IconTrophy, IconBrain } from "@tabler/icons-react";
 import { useStreak } from "@/lib/streakContext";
+import { useAuth } from "@/lib/auth";
+import { api } from "@/lib/api";
+import Calendar from "./Calendar";
 
 interface StreakModalProps {
   isOpen: boolean;
@@ -17,7 +20,41 @@ export default function StreakModal({
   isNewStreak = false,
 }: StreakModalProps) {
   const { streakData, lifetimeAnalogies } = useStreak();
-  //   const [showCelebration, setShowCelebration] = useState(false);
+  const { user } = useAuth();
+  const [streakLogs, setStreakLogs] = useState<string[]>([]);
+  const [loadingStreakLogs, setLoadingStreakLogs] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+
+  // Fetch streak logs for the selected month
+  const fetchStreakLogs = async (month: number, year: number) => {
+    if (!user) return;
+    
+    try {
+      setLoadingStreakLogs(true);
+      const response = await api.getUserStreakLogs(user.id, year, month);
+      console.log('Streak logs response:', response);
+      console.log('Streak logs dates:', response.streak_logs);
+      setStreakLogs(response.streak_logs);
+    } catch (error) {
+      console.error("Error fetching streak logs:", error);
+      setStreakLogs([]);
+    } finally {
+      setLoadingStreakLogs(false);
+    }
+  };
+
+  // Load streak logs when modal opens or month changes
+  useEffect(() => {
+    if (isOpen && user) {
+      fetchStreakLogs(selectedMonth, selectedYear);
+    }
+  }, [isOpen, user, selectedMonth, selectedYear]);
+
+  const handleMonthChange = (month: number, year: number) => {
+    setSelectedMonth(month);
+    setSelectedYear(year);
+  };
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -77,7 +114,7 @@ export default function StreakModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="relative w-full max-w-sm sm:max-w-md lg:max-w-lg"
+            className="relative w-full max-w-sm sm:max-w-md lg:max-w-4xl"
           >
             <BackgroundGradient containerClassName="rounded-lg p-[2px]">
               <div className="relative bg-[#1a1a1a] rounded-lg p-6 sm:p-8 w-full">
@@ -88,20 +125,6 @@ export default function StreakModal({
                 >
                   <IconX className="w-4 h-4" />
                 </button>
-
-                {/* Celebration animation */}
-                {/* {showCelebration && (
-                  <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    exit={{ scale: 0, rotate: 180 }}
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                  >
-                    <div className="text-6xl animate-bounce">
-                      <IconFlame className="w-16 h-16 text-orange-400" />
-                    </div>
-                  </motion.div>
-                )} */}
 
                 {/* Content */}
                 <div className="space-y-6">
@@ -122,88 +145,107 @@ export default function StreakModal({
                     </div>
                   </div>
 
-                  {/* Stats Grid */}
-                  <div className="grid grid-cols-1 gap-4">
-                    {/* Current Streak */}
-                    <BackgroundGradient containerClassName="rounded-lg p-[1px]">
-                      <div className="bg-[#1a1a1a] rounded-lg p-4 flex items-center justify-between w-full">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                            <IconFlame className="w-5 h-5 text-white" />
+                  {/* Two-column layout for stats and calendar */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Left column - Stats */}
+                    <div className="space-y-4">
+                      {/* Current Streak */}
+                      <BackgroundGradient containerClassName="rounded-lg p-[1px]">
+                        <div className="bg-[#1a1a1a] rounded-lg p-4 flex items-center justify-between w-full">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                              <IconFlame className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-white font-medium">
+                                Daily Streak
+                              </p>
+                              <p className="text-gray-400 text-sm">
+                                Current streak
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-white font-medium">
-                              Daily Streak
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-orange-400">
+                              {streakData?.current_streak_count || 0}
                             </p>
                             <p className="text-gray-400 text-sm">
-                              Current streak
+                              {streakData?.current_streak_count === 1
+                                ? "day"
+                                : "days"}
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-orange-400">
-                            {streakData?.current_streak_count || 0}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            {streakData?.current_streak_count === 1
-                              ? "day"
-                              : "days"}
-                          </p>
-                        </div>
-                      </div>
-                    </BackgroundGradient>
+                      </BackgroundGradient>
 
-                    {/* Longest Streak */}
-                    <BackgroundGradient containerClassName="rounded-lg p-[1px]">
-                      <div className="bg-[#1a1a1a] rounded-lg p-4 flex items-center justify-between w-full">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
-                            <IconTrophy className="w-5 h-5 text-white" />
+                      {/* Longest Streak */}
+                      <BackgroundGradient containerClassName="rounded-lg p-[1px]">
+                        <div className="bg-[#1a1a1a] rounded-lg p-4 flex items-center justify-between w-full">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center">
+                              <IconTrophy className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-white font-medium">
+                                Longest Streak
+                              </p>
+                              <p className="text-gray-400 text-sm">Best record</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-white font-medium">
-                              Longest Streak
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-yellow-400">
+                              {streakData?.longest_streak_count || 0}
                             </p>
-                            <p className="text-gray-400 text-sm">Best record</p>
+                            <p className="text-gray-400 text-sm">
+                              {streakData?.longest_streak_count === 1
+                                ? "day"
+                                : "days"}
+                            </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-yellow-400">
-                            {streakData?.longest_streak_count || 0}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            {streakData?.longest_streak_count === 1
-                              ? "day"
-                              : "days"}
-                          </p>
-                        </div>
-                      </div>
-                    </BackgroundGradient>
+                      </BackgroundGradient>
 
-                    {/* Total Analogies */}
-                    <BackgroundGradient containerClassName="rounded-lg p-[1px]">
-                      <div className="bg-[#1a1a1a] rounded-lg p-4 flex items-center justify-between w-full">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
-                            <IconBrain className="w-5 h-5 text-white" />
+                      {/* Total Analogies */}
+                      <BackgroundGradient containerClassName="rounded-lg p-[1px]">
+                        <div className="bg-[#1a1a1a] rounded-lg p-4 flex items-center justify-between w-full">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-blue-600 flex items-center justify-center">
+                              <IconBrain className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                              <p className="text-white font-medium">
+                                Lifetime Analogies
+                              </p>
+                              <p className="text-gray-400 text-sm">Generated</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-white font-medium">
-                              Lifetime Analogies
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-purple-400">
+                              {lifetimeAnalogies}
                             </p>
-                            <p className="text-gray-400 text-sm">Generated</p>
+                            <p className="text-gray-400 text-sm">
+                              {lifetimeAnalogies === 1 ? "analogy" : "analogies"}
+                            </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-2xl font-bold text-purple-400">
-                            {lifetimeAnalogies}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            {lifetimeAnalogies === 1 ? "analogy" : "analogies"}
-                          </p>
+                      </BackgroundGradient>
+                    </div>
+
+                    {/* Right column - Calendar */}
+                    <div className="flex justify-center">
+                      {loadingStreakLogs ? (
+                        <div className="flex items-center justify-center w-full h-48">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
                         </div>
-                      </div>
-                    </BackgroundGradient>
+                      ) : (
+                        <Calendar
+                          activeStreakDates={streakLogs}
+                          selectedMonth={selectedMonth}
+                          selectedYear={selectedYear}
+                          onMonthChange={handleMonthChange}
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {/* Action Button */}

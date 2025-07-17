@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
 import requests
@@ -17,7 +18,7 @@ import supabase
 from supabase import create_client, Client
 
 from utils.prompts import ANALOGY_PROMPT, COMIC_STYLE_PREFIX
-from utils.helpers import extract_raw_json, generate_image_stability
+from utils.helpers import extract_raw_json, generate_image_replicate, check_image_exists
 
 # Load environment variables
 load_dotenv()
@@ -27,7 +28,7 @@ SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_PRIVATE_KEY")
 supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Negative Prompt for Stability AI Generations
+# Negative Prompt for Replicate SDXL Generations
 NEGATIVE_PROMPT = "text, captions, speech bubbles, watermark, low detail, blurry, duplicate face, extra limbs, extra fingers"
 
 # Initialize FastAPI app
@@ -42,6 +43,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Configure Gemini API
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
@@ -51,103 +55,276 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 # Set up the Gemini model
 model = genai.GenerativeModel('gemini-2.0-flash')
 
-# Store active requests for cancellation
 active_requests = {}
 
-async def generate_analogy_with_httpx(prompt: str, timeout: float = 30.0, request_id: str = None):
-    """
-    Generate analogy using httpx for proper cancellation support.
-    
-    Args:
-        prompt (str): The prompt to send to Gemini
-        timeout (float): Timeout in seconds
-        request_id (str): Optional request ID for tracking
-        
-    Returns:
-        dict: The generated analogy JSON
-        
-    Raises:
-        asyncio.TimeoutError: If the request times out
-        httpx.RequestError: If there's a network error
-        Exception: For other errors
-    """
+async def generate_analogy_with_httpx(prompt: str, topic: str, audience: str, timeout: float = 30.0, request_id: str = None):
     gemini_api_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_api_key:
-        raise Exception("GEMINI_API_KEY not found in environment variables")
-    
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-    
-    headers = {
-        "Content-Type": "application/json",
-    }
-    
+    brave_api_key = os.getenv("BRAVE_API_KEY")
+
+    if not gemini_api_key or not brave_api_key:
+        raise Exception("Missing GEMINI_API_KEY or BRAVE_API_KEY in environment variables")
+
+    gemini_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
+
+    headers = {"Content-Type": "application/json"}
+
     data = {
         "contents": [
             {
-                "parts": [
-                    {
-                        "text": prompt
-                    }
-                ]
+                "role": "user",
+                "parts": [{"text": prompt}]
             }
         ],
         "generationConfig": {
-            "temperature": 0.7,
-            "topK": 40,
+            "temperature": 1.0,
+            "topK": 20,
             "topP": 0.95,
-            "maxOutputTokens": 8192,
+            "maxOutputTokens": 16000,
+            "responseMimeType": "application/json",
+            "responseSchema": {
+                "type": "object",
+                "properties": {
+                    "title": {"type": "string"},
+                    "chapter1section1": {"type": "string"},
+                    "chapter1quote": {"type": "string"},
+                    "chapter1section2": {"type": "string"},
+                    "chapter2section1": {"type": "string"},
+                    "chapter2quote": {"type": "string"},
+                    "chapter2section2": {"type": "string"},
+                    "chapter3section1": {"type": "string"},
+                    "chapter3quote": {"type": "string"},
+                    "chapter3section2": {"type": "string"},
+                    "summary": {"type": "string"},
+                    "searchQuery": {"type": "string"},
+                    "imagePrompt1": {"type": "string"},
+                    "imagePrompt2": {"type": "string"},
+                    "imagePrompt3": {"type": "string"}
+                },
+                "required": [
+                    "title", "chapter1section1", "chapter1quote", "chapter1section2",
+                    "chapter2section1", "chapter2quote", "chapter2section2",
+                    "chapter3section1", "chapter3quote", "chapter3section2",
+                    "summary", "searchQuery", "imagePrompt1", "imagePrompt2", "imagePrompt3"
+                ]
+            }
         }
     }
-    
-    # Store the request for potential cancellation
+
     if request_id:
         active_requests[request_id] = {"status": "running", "start_time": time.time()}
-    
+
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
-            response = await client.post(
-                url,
+            gemini_response = await client.post(
+                gemini_url,
                 headers=headers,
                 json=data,
                 params={"key": gemini_api_key}
             )
-            
-            if response.status_code != 200:
-                raise Exception(f"Gemini API error: {response.status_code} - {response.text}")
-            
-            result = response.json()
-            
-            # Extract the generated text from the response
-            if "candidates" in result and len(result["candidates"]) > 0:
-                content = result["candidates"][0]["content"]
-                if "parts" in content and len(content["parts"]) > 0:
-                    generated_text = content["parts"][0]["text"]
-                    return generated_text
-                else:
-                    raise Exception("No text content found in Gemini response")
-            else:
-                raise Exception("No candidates found in Gemini response")
+
+            if gemini_response.status_code != 200:
+                raise Exception(f"Gemini API error: {gemini_response.status_code} - {gemini_response.text}")
+
+            gemini_result = gemini_response.json()
+            parts = gemini_result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+            if not parts:
+                raise Exception("Gemini response is missing 'parts' content")
+
+            analogy_json_raw = parts[0].get("text", "")
+            try:
+                analogy_json = json.loads(analogy_json_raw)
+            except json.JSONDecodeError as e:
+                raise Exception(f"Failed to parse JSON from Gemini: {e}\nRaw text: {analogy_json_raw}")
+
+            search_query = analogy_json.get("searchQuery", topic)
+
+            brave_response = await client.get(
+                "https://api.search.brave.com/res/v1/web/search",
+                headers={
+                    "Accept": "application/json",
+                    "X-Subscription-Token": brave_api_key
+                },
+                params={"q": search_query, "count": 20}
+            )
+
+            video_links = []
+            text_links = []
+
+            if brave_response.status_code == 200:
+                brave_json = brave_response.json()
+
+                for v in brave_json.get("videos", {}).get("results", []):
+                    if len(video_links) >= 4:
+                        break
+                    video_meta = v.get("video", {})
+                    meta_url = v.get("meta_url", {})
+                    video_links.append({
+                        "url": v.get("url"),
+                        "title": v.get("title"),
+                        "description": v.get("description", ""),
+                        "thumbnail": v.get("thumbnail", {}).get("src") or v.get("thumbnail", {}).get("original"),
+                        "published": v.get("age"),
+                        "source": meta_url.get("hostname") or "youtube.com",
+                        "publisher": video_meta.get("publisher") or "unknown",
+                        "creator": video_meta.get("creator")
+                    })
+
+                for r in brave_json.get("web", {}).get("results", []):
+                    if len(text_links) >= 4:
+                        break
+                    url = r.get("url", "")
+                    subtype = r.get("subtype", "")
+                    if (
+                        subtype == "video" or
+                        subtype == "image" or
+                        "youtube.com" in url or
+                        r.get("type") != "search_result"
+                    ):
+                        continue
+                    profile = r.get("profile", {})
+                    meta_url = r.get("meta_url", {})
+                    text_links.append({
+                        "url": url,
+                        "title": r.get("title"),
+                        "description": r.get("description", ""),
+                        "thumbnail": r.get("thumbnail", {}).get("src") or r.get("thumbnail", {}).get("original"),
+                        "published": r.get("age"),
+                        "source": profile.get("long_name") or meta_url.get("hostname") or "unknown",
+                        "publisher": profile.get("name") or "unknown",
+                        "creator": None
+                    })
+
+            analogy_json["videoLinks"] = video_links
+            analogy_json["textLinks"] = text_links
+
+            return analogy_json
+
     finally:
-        # Clean up the request tracking
         if request_id and request_id in active_requests:
             del active_requests[request_id]
 
-def update_user_streak(user_id: str):
+def validate_and_update_user_streak(user_id: str):
     """
-    Update the user's daily streak when they generate an analogy.
+    Validate the user's current streak and update it if broken.
+    This function should be called whenever streak information is queried.
     
     Args:
         user_id (str): The user's ID
         
     Returns:
-        dict: Updated streak information
+        dict: Updated streak information, or None if user not found
     """
     try:
-        print(f"Updating streak for user: {user_id}")
+        print(f"Validating streak for user: {user_id}")
         
         # Get current date in UTC
         current_date = datetime.now(timezone.utc).date()
+        
+        # Fetch current user streak info including streak_reset_acknowledged
+        user_response = supabase_client.table("user_information").select(
+            "current_streak_count, longest_streak_count, last_streak_date, last_analogy_time, streak_reset_acknowledged"
+        ).eq("id", user_id).single().execute()
+        
+        if not user_response.data:
+            print(f"No user found for ID: {user_id}")
+            return None
+            
+        user_data = user_response.data
+        
+        # Get current streak values, defaulting to 0 if null
+        current_streak = user_data.get("current_streak_count", 0) or 0
+        longest_streak = user_data.get("longest_streak_count", 0) or 0
+        last_streak_date = user_data.get("last_streak_date")
+        streak_reset_acknowledged = user_data.get("streak_reset_acknowledged", True)  # Default to True
+        
+        print(f"Current streak: {current_streak}, Longest streak: {longest_streak}, Last streak date: {last_streak_date}, Reset acknowledged: {streak_reset_acknowledged}")
+        
+        # Convert last_streak_date to date object if it's a string
+        if isinstance(last_streak_date, str):
+            try:
+                last_streak_date = datetime.fromisoformat(last_streak_date.replace('Z', '+00:00')).date()
+            except ValueError:
+                last_streak_date = None
+        
+        # Check if streak is broken (more than 1 day since last analogy)
+        streak_broken = False
+        days_since_last_analogy = 0
+        
+        if last_streak_date:
+            days_since_last_analogy = (current_date - last_streak_date).days
+            streak_broken = days_since_last_analogy > 1
+        else:
+            # No last streak date means no streak
+            streak_broken = True
+            days_since_last_analogy = None
+        
+        # If streak is broken and current streak > 0, reset it to 0
+        if streak_broken and current_streak > 0:
+            print(f"Streak broken for user {user_id}. Days since last analogy: {days_since_last_analogy}. Resetting streak from {current_streak} to 0.")
+            
+            # Update user information in Supabase - reset streak and set streak_reset_acknowledged to False
+            update_response = supabase_client.table("user_information").update({
+                "current_streak_count": 0,
+                "streak_reset_acknowledged": False,  # User needs to acknowledge this reset
+                # Don't update longest_streak_count as it should remain the record
+            }).eq("id", user_id).execute()
+            
+            if not update_response.data:
+                print(f"Failed to reset streak for user: {user_id}")
+                return None
+            
+            # Update local values for return
+            current_streak = 0
+            streak_reset_acknowledged = False  # User hasn't acknowledged this reset yet
+            print(f"Successfully reset streak for user {user_id} to 0")
+        else:
+            print(f"Streak validation complete for user {user_id}. Current streak: {current_streak}, Days since last analogy: {days_since_last_analogy}")
+        
+        # Determine if streak is currently active
+        is_streak_active = False
+        if last_streak_date:
+            is_streak_active = days_since_last_analogy <= 1
+        
+        # Only return streak_was_reset: true if the streak was just reset AND user hasn't acknowledged it
+        streak_was_reset = streak_broken and current_streak == 0 and not streak_reset_acknowledged
+        
+        return {
+            "current_streak_count": current_streak,
+            "longest_streak_count": longest_streak,
+            "last_streak_date": user_data.get("last_streak_date"),
+            "last_analogy_time": user_data.get("last_analogy_time"),
+            "is_streak_active": is_streak_active,
+            "days_since_last_analogy": days_since_last_analogy,
+            "streak_was_reset": streak_was_reset
+        }
+        
+    except Exception as e:
+        print(f"Error validating user streak: {e}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+def update_user_streak(user_id: str, analogy_id: str = None):
+    """
+    Update the user's daily streak when they generate an analogy.
+    
+    Args:
+        user_id (str): The user's ID
+        analogy_id (str, optional): The ID of the analogy that triggered this streak update
+        
+    Returns:
+        dict: Updated streak information
+    """
+    try:
+        print(f"Updating streak for user: {user_id}, analogy_id: {analogy_id}")
+        
+        # Get current date in UTC - this should match what we store in the database
+        current_date = datetime.now(timezone.utc).date()
         current_timestamp = datetime.now(timezone.utc)
+        
+        print(f"Current UTC date: {current_date}")
+        print(f"Current UTC timestamp: {current_timestamp}")
         
         # Fetch current user streak info
         user_response = supabase_client.table("user_information").select(
@@ -212,6 +389,10 @@ def update_user_streak(user_id: str):
             
         print(f"Successfully updated streak for user {user_id}: current={new_streak_count}, longest={new_longest_streak}")
         
+        # Insert a streak log entry for today's date
+        print(f"About to insert streak log for date: {current_date}")
+        insert_streak_log(user_id, current_date, analogy_id)
+
         return {
             "current_streak_count": new_streak_count,
             "longest_streak_count": new_longest_streak,
@@ -225,6 +406,52 @@ def update_user_streak(user_id: str):
         import traceback
         traceback.print_exc()
         return None
+
+def insert_streak_log(user_id: str, log_date: date, analogy_id: str = None):
+    """
+    Insert a streak log entry for a specific user and date.
+    This function respects the unique_user_day constraint.
+    
+    Args:
+        user_id (str): The user's ID
+        log_date (date): The date to log
+        analogy_id (str, optional): The ID of the analogy that triggered this streak log
+        
+    Returns:
+        bool: True if successfully inserted, False if already exists
+    """
+    try:
+        print(f"Inserting streak log for user: {user_id}, date: {log_date}, analogy_id: {analogy_id}")
+        print(f"Date type: {type(log_date)}, Date value: {log_date}")
+        
+        # Prepare the data to insert
+        log_data = {
+            "user_id": user_id,
+            "date": log_date.isoformat(),
+        }
+        
+        # Add analogy_id if provided
+        if analogy_id:
+            log_data["analogy_id"] = analogy_id
+        
+        # Insert streak log entry
+        insert_response = supabase_client.table("streak_logs").insert(log_data).execute()
+        
+        if insert_response.data:
+            print(f"Successfully inserted streak log for user {user_id}, date {log_date}, analogy_id {analogy_id}")
+            return True
+        else:
+            print(f"Failed to insert streak log for user {user_id}, date {log_date}")
+            return False
+            
+    except Exception as e:
+        # Check if this is a unique constraint violation (already exists)
+        if "unique_user_day" in str(e).lower() or "duplicate key" in str(e).lower():
+            print(f"Streak log already exists for user {user_id}, date {log_date}")
+            return False
+        else:
+            print(f"Error inserting streak log: {e}")
+            return False
 
 # Pydantic models for request/response
 class GenerateAnalogyRequest(BaseModel):
@@ -292,6 +519,7 @@ def sign_up_user(payload: SignUpRequest):
             "longest_streak_count": 0,
             "last_streak_date": None,
             "last_analogy_time": None,
+            "streak_reset_acknowledged": True,  # New users don't need to see reset notification
         }).execute()
 
         if not insert_response.data:
@@ -308,42 +536,49 @@ async def generate_analogy(request: GenerateAnalogyRequest):
         topic = request.topic
         audience = request.audience
         user_id = request.user_id
-        user_first_name = "ignore name if seeing this"
+        user_first_name = supabase_client.table("user_information").select("first_name").eq("id", user_id).single().execute().data.get("first_name")
 
         if not topic or not audience:
             raise HTTPException(status_code=400, detail="Both topic and audience are required")
 
         user_info = ""
-        # if user_id:
-        #     try:
-        #         print(f"Fetching user info for user_id: {user_id}\n")
-        #         start_time = time.time()
-        #         user_response = supabase_client.table("personality_answers").select("*").eq("user_id", user_id).limit(1).execute()
-        #         end_time = time.time()
-        #         print(f"Supabase request took: {end_time - start_time} seconds")
+        if user_id:
+            try:
+                print(f"Fetching user info for user_id: {user_id}\n")
+                start_time = time.time()
+                user_response = supabase_client.table("personality_answers").select("*").eq("user_id", user_id).limit(1).execute()
+                end_time = time.time()
+                print(f"Supabase request took: {end_time - start_time} seconds")
 
-        #         if user_response.data:
-        #             data = user_response.data
-        #             print(f"User response: {data}")
-        #             context_parts = []
-        #             if data["context"]:
-        #                 context_parts.append(f"They are in the {data['context']} category.")
-        #             if data["role"]:
-        #                 context_parts.append(f"They work as a {data['role']}.")
-        #             if data["analogy_style"]:
-        #                 context_parts.append(f"They prefer analogies that are {', '.join(data['analogy_style'])}.")
-        #             if data["interests"]:
-        #                 context_parts.append(f"They are interested in {', '.join(data['interests'])}.")
-        #             if data["hobbies"]:
-        #                 context_parts.append(f"They enjoy {', '.join(data['hobbies'])}.")
-        #             if data["likes"]:
-        #                 context_parts.append(f"They like {', '.join(data['likes'])}.")
-        #             if data["dislikes"]:
-        #                 context_parts.append(f"They dislike {', '.join(data['dislikes'])}.")
-        #             user_info = " ".join(context_parts)
-        #     except Exception as e:
-        #         print(f"Error fetching user info: {e}")
-        #     print(f"Fetched User info for user_id: {user_id} is: {user_info}\n")
+                if user_response.data:
+                    data = user_response.data[0]  # Access the first result
+                    print(f"User response: {data}")
+                    context_parts = []
+
+                    # Individual fields
+                    if data.get("context"):
+                        context_parts.append(f"They are in the {data['context']} category.")
+                    if data.get("occupation"):
+                        context_parts.append(f"They work as a {data['occupation']}.")
+
+                    # List fields (joined cleanly)
+                    if isinstance(data.get("analogy_styles"), list) and data["analogy_styles"]:
+                        context_parts.append(f"They prefer analogies that are {', '.join(data['analogy_styles'])}.")
+                    if isinstance(data.get("interests"), list) and data["interests"]:
+                        context_parts.append(f"They are interested in {', '.join(data['interests'])}.")
+                    if isinstance(data.get("hobbies"), list) and data["hobbies"]:
+                        context_parts.append(f"They enjoy {', '.join(data['hobbies'])}.")
+                    if isinstance(data.get("likes"), list) and data["likes"]:
+                        context_parts.append(f"They like {', '.join(data['likes'])}.")
+                    if isinstance(data.get("dislikes"), list) and data["dislikes"]:
+                        context_parts.append(f"They dislike {', '.join(data['dislikes'])}.")
+
+                    user_info = " ".join(context_parts)
+
+            except Exception as e:
+                print(f"Error fetching user info: {e}")
+
+            print(f"Fetched User info for user_id: {user_id} is: {user_info}\n")
 
         prompt = ANALOGY_PROMPT.format(topic=topic, audience=audience, user_first_name=user_first_name, user_info=user_info, COMIC_STYLE_PREFIX=COMIC_STYLE_PREFIX)
         print(f"Prompt: {prompt}")
@@ -356,12 +591,12 @@ async def generate_analogy(request: GenerateAnalogyRequest):
             start_time = time.time()
             
             # Use httpx for cancellable Gemini API calls
-            response_text = await generate_analogy_with_httpx(prompt, timeout=30.0, request_id=request_id)
+            response_text = await generate_analogy_with_httpx(prompt, topic, audience, timeout=30.0, request_id=request_id)
             
             print(f"Response: {response_text}")
             end_time = time.time()
             print(f"Time taken to generate response: {end_time - start_time} seconds")
-            analogy_json = extract_raw_json(response_text)
+            analogy_json = response_text
         except asyncio.TimeoutError:
             print("Gemini API call timed out after 30 seconds")
             raise HTTPException(status_code=408, detail="Analogy generation timed out. Please try again.")
@@ -384,10 +619,21 @@ async def generate_analogy(request: GenerateAnalogyRequest):
         # Generate images with timeout and cancellation support
         try:
             image_urls = await asyncio.gather(
-                generate_image_stability(image_prompts[0], 0, NEGATIVE_PROMPT, timeout=20.0),
-                generate_image_stability(image_prompts[1], 1, NEGATIVE_PROMPT, timeout=20.0),
-                generate_image_stability(image_prompts[2], 2, NEGATIVE_PROMPT, timeout=20.0)
+                generate_image_replicate(image_prompts[0], 0, NEGATIVE_PROMPT, timeout=20.0),
+                generate_image_replicate(image_prompts[1], 1, NEGATIVE_PROMPT, timeout=20.0),
+                generate_image_replicate(image_prompts[2], 2, NEGATIVE_PROMPT, timeout=20.0)
             )
+            
+            # Verify that all images exist, use fallbacks if not
+            verified_image_urls = []
+            for i, image_url in enumerate(image_urls):
+                verified_url = check_image_exists(image_url, i)
+                verified_image_urls.append(verified_url)
+                if verified_url != image_url:
+                    print(f"Image {i} not found, using fallback: {verified_url}")
+            
+            image_urls = verified_image_urls
+            
         except Exception as e:
             print(f"Error generating images: {e}")
             raise HTTPException(status_code=500, detail="Failed to generate images")
@@ -459,7 +705,7 @@ async def generate_analogy(request: GenerateAnalogyRequest):
         # Update user streak after successfully saving the analogy
         try:
             print("Updating user streak after successful analogy generation")
-            streak_update = update_user_streak(user_id)
+            streak_update = update_user_streak(user_id, analogy_id)
             if streak_update:
                 print(f"Streak updated successfully: {streak_update}")
             else:
@@ -538,12 +784,21 @@ async def get_analogy(analogy_id: str):
                 print(f"Error parsing analogy_json: {e}")
                 raise HTTPException(status_code=500, detail="Invalid analogy data format")
 
+        # Verify that all images exist, use fallbacks if not
+        image_urls = analogy_data["image_urls"]
+        verified_image_urls = []
+        for i, image_url in enumerate(image_urls):
+            verified_url = check_image_exists(image_url, i)
+            verified_image_urls.append(verified_url)
+            if verified_url != image_url:
+                print(f"Image {i} not found for analogy {analogy_id}, using fallback: {verified_url}")
+
         print("reached here and now trying to send back the response")
         return GetAnalogyResponse(
             status="success",
             analogy=analogy_json,  # Now guaranteed to be a dict
             id=analogy_data["id"],
-            analogy_images=analogy_data["image_urls"],
+            analogy_images=verified_image_urls,
             topic=analogy_data["topic"],
             audience=analogy_data["audience"],
             created_at=analogy_data["created_at"],
@@ -586,13 +841,22 @@ async def get_user_analogies(user_id: str):
                     print(f"Error parsing analogy_json: {e}")
                     continue  # Skip this analogy if JSON parsing fails
 
+            # Verify that all images exist, use fallbacks if not
+            image_urls = analogy_data["image_urls"]
+            verified_image_urls = []
+            for i, image_url in enumerate(image_urls):
+                verified_url = check_image_exists(image_url, i)
+                verified_image_urls.append(verified_url)
+                if verified_url != image_url:
+                    print(f"Image {i} not found for analogy {analogy_data.get('id', 'no-id')}, using fallback: {verified_url}")
+
             # Structure the analogy data to match frontend expectations
             analogy = {
                 "id": analogy_data["id"],
                 "topic": analogy_data["topic"],
                 "audience": analogy_data["audience"],
                 "analogy_json": analogy_json,
-                "image_urls": analogy_data["image_urls"],
+                "image_urls": verified_image_urls,
                 "created_at": analogy_data["created_at"]
             }
             analogies.append(analogy)
@@ -707,10 +971,21 @@ async def regenerate_analogy(analogy_id: str):
         # Generate images with timeout and cancellation support
         try:
             image_urls = await asyncio.gather(
-                generate_image_stability(image_prompts[0], 0, NEGATIVE_PROMPT, timeout=20.0),
-                generate_image_stability(image_prompts[1], 1, NEGATIVE_PROMPT, timeout=20.0),
-                generate_image_stability(image_prompts[2], 2, NEGATIVE_PROMPT, timeout=20.0)
+                generate_image_replicate(image_prompts[0], 0, NEGATIVE_PROMPT, timeout=20.0),
+                generate_image_replicate(image_prompts[1], 1, NEGATIVE_PROMPT, timeout=20.0),
+                generate_image_replicate(image_prompts[2], 2, NEGATIVE_PROMPT, timeout=20.0)
             )
+            
+            # Verify that all images exist, use fallbacks if not
+            verified_image_urls = []
+            for i, image_url in enumerate(image_urls):
+                verified_url = check_image_exists(image_url, i)
+                verified_image_urls.append(verified_url)
+                if verified_url != image_url:
+                    print(f"Image {i} not found, using fallback: {verified_url}")
+            
+            image_urls = verified_image_urls
+            
         except Exception as e:
             print(f"Error generating images: {e}")
             raise HTTPException(status_code=500, detail="Failed to generate images")
@@ -782,7 +1057,7 @@ async def regenerate_analogy(analogy_id: str):
         # Update user streak after successfully saving the analogy
         try:
             print("Updating user streak after successful analogy regeneration")
-            streak_update = update_user_streak(user_id)
+            streak_update = update_user_streak(user_id, new_analogy_id)
             if streak_update:
                 print(f"Streak updated successfully: {streak_update}")
             else:
@@ -844,6 +1119,7 @@ async def regenerate_analogy(analogy_id: str):
 async def get_user_streak(user_id: str):
     """
     Get the current streak information for a user.
+    This endpoint automatically validates and resets broken streaks.
     
     Args:
         user_id (str): The user's ID
@@ -854,48 +1130,98 @@ async def get_user_streak(user_id: str):
     try:
         print(f"Fetching streak info for user: {user_id}")
         
-        # Fetch user streak info
-        user_response = supabase_client.table("user_information").select(
-            "current_streak_count, longest_streak_count, last_streak_date, last_analogy_time"
-        ).eq("id", user_id).single().execute()
+        # Validate and potentially update the user's streak
+        streak_data = validate_and_update_user_streak(user_id)
         
-        if not user_response.data:
+        if not streak_data:
             raise HTTPException(status_code=404, detail="User not found")
-            
-        user_data = user_response.data
-        
-        # Get current date in UTC for comparison
-        current_date = datetime.now(timezone.utc).date()
-        
-        # Check if streak is still active (user generated analogy today or yesterday)
-        is_streak_active = False
-        last_streak_date = user_data.get("last_streak_date")
-        
-        if last_streak_date:
-            if isinstance(last_streak_date, str):
-                try:
-                    last_streak_date = datetime.fromisoformat(last_streak_date.replace('Z', '+00:00')).date()
-                except ValueError:
-                    last_streak_date = None
-            
-            if last_streak_date:
-                days_since_last_analogy = (current_date - last_streak_date).days
-                is_streak_active = days_since_last_analogy <= 1
         
         return {
             "status": "success",
-            "current_streak_count": user_data.get("current_streak_count", 0) or 0,
-            "longest_streak_count": user_data.get("longest_streak_count", 0) or 0,
-            "last_streak_date": user_data.get("last_streak_date"),
-            "last_analogy_time": user_data.get("last_analogy_time"),
-            "is_streak_active": is_streak_active,
-            "days_since_last_analogy": (current_date - last_streak_date).days if last_streak_date else None
+            "current_streak_count": streak_data["current_streak_count"],
+            "longest_streak_count": streak_data["longest_streak_count"],
+            "last_streak_date": streak_data["last_streak_date"],
+            "last_analogy_time": streak_data["last_analogy_time"],
+            "is_streak_active": streak_data["is_streak_active"],
+            "days_since_last_analogy": streak_data["days_since_last_analogy"],
+            "streak_was_reset": streak_data.get("streak_was_reset", False)
         }
         
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error in get_user_streak: {e}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/user/{user_id}/streak-logs")
+async def get_user_streak_logs(user_id: str, year: int = None, month: int = None):
+    """
+    Get streak logs for a user, optionally scoped to a specific month.
+    
+    Args:
+        user_id (str): The user's ID
+        year (int, optional): Year to filter by (defaults to current year)
+        month (int, optional): Month to filter by (defaults to current month)
+        
+    Returns:
+        dict: List of streak log dates
+    """
+    try:
+        print(f"Fetching streak logs for user: {user_id}, year: {year}, month: {month}")
+        
+        # If year and month are not provided, use current date in UTC
+        if year is None or month is None:
+            current_date = datetime.now(timezone.utc)
+            year = year or current_date.year
+            month = month or current_date.month
+        
+        # Calculate first and last day of the month
+        first_day = date(year, month, 1)
+        if month == 12:
+            last_day = date(year + 1, 1, 1) - timedelta(days=1)
+        else:
+            last_day = date(year, month + 1, 1) - timedelta(days=1)
+        
+        print(f"Fetching streak logs from {first_day} to {last_day}")
+        
+        # Fetch streak logs for the specified month
+        result = supabase_client.table("streak_logs").select("date").eq("user_id", user_id).gte("date", first_day.isoformat()).lte("date", last_day.isoformat()).execute()
+        
+        if not result.data:
+            print(f"No streak logs found for user {user_id} in {year}-{month}")
+            return {
+                "status": "success",
+                "streak_logs": [],
+                "year": year,
+                "month": month
+            }
+        
+        # Extract dates from the result
+        streak_dates = [log["date"] for log in result.data]
+        print(f"Found {len(streak_dates)} streak logs for user {user_id} in {year}-{month}")
+        print(f"Streak dates: {streak_dates}")
+        
+        # Debug: Check if any dates are in the wrong timezone
+        current_utc = datetime.now(timezone.utc).date()
+        print(f"Current UTC date: {current_utc}")
+        for date_str in streak_dates:
+            parsed_date = datetime.fromisoformat(date_str).date()
+            print(f"Parsed date {date_str} -> {parsed_date}, matches current: {parsed_date == current_utc}")
+        
+        return {
+            "status": "success",
+            "streak_logs": streak_dates,
+            "year": year,
+            "month": month
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in get_user_streak_logs: {e}")
         print(f"Error type: {type(e)}")
         import traceback
         traceback.print_exc()
@@ -1030,6 +1356,38 @@ async def mark_streak_popup_shown(analogy_id: str, user_id: str):
         raise
     except Exception as e:
         print(f"Error in mark_streak_popup_shown: {e}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/user/{user_id}/acknowledge-streak-reset")
+async def acknowledge_streak_reset(user_id: str):
+    """
+    Acknowledge that the user has seen the streak reset notification.
+    This endpoint should be called when the user closes the streak reset modal.
+    """
+    try:
+        print(f"Acknowledging streak reset for user: {user_id}")
+        
+        # Update the streak_reset_acknowledged field to True
+        update_result = supabase_client.table("user_information").update({
+            "streak_reset_acknowledged": True
+        }).eq("id", user_id).execute()
+        
+        if not update_result.data:
+            raise HTTPException(status_code=500, detail="Failed to acknowledge streak reset")
+        
+        print(f"Successfully acknowledged streak reset for user: {user_id}")
+        return {
+            "status": "success",
+            "message": "Streak reset acknowledged"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in acknowledge_streak_reset: {e}")
         print(f"Error type: {type(e)}")
         import traceback
         traceback.print_exc()

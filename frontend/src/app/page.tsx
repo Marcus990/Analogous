@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 import { useStreak } from "@/lib/streakContext";
+import { useNotification } from "@/lib/notificationContext";
 import { api } from "@/lib/api";
 import { HoloCard } from "@/components/HoloCard";
 import ExplainWords from "@/components/ExplainWords";
@@ -25,6 +26,7 @@ export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
   const { refreshStreakData } = useStreak();
+  const { showNotification } = useNotification();
   const {
     topicCard,
     audienceCard,
@@ -214,8 +216,12 @@ export default function Home() {
         // Don't show error message for user-initiated cancellation
       } else {
         console.error("Error generating analogy:", error);
-        // Handle error - you might want to show a toast notification
-        alert("Failed to generate analogy. Please try again.");
+        showNotification({
+          title: "Generation Failed",
+          message: "Failed to generate analogy. Please try again.",
+          type: "error",
+          confirmText: "OK"
+        });
       }
     } finally {
       setIsGenerating(false);

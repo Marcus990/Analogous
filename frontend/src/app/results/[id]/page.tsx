@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useStreak } from "@/lib/streakContext";
+import { useNotification } from "@/lib/notificationContext";
 import "../page.css";
 
 export default function ResultsPage() {
@@ -30,6 +31,7 @@ export default function ResultsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { refreshStreakData } = useStreak();
+  const { showNotification } = useNotification();
   const [analogy, setAnalogy] = useState<GenerateAnalogyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +42,22 @@ export default function ResultsPage() {
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [showStreakModal, setShowStreakModal] = useState(false);
   const [hasShownStreakModal, setHasShownStreakModal] = useState(false);
-  const [regenerateAbortController, setRegenerateAbortController] = useState<AbortController | null>(null);
+  const [regenerateAbortController, setRegenerateAbortController] =
+    useState<AbortController | null>(null);
+  const [activeLearnMoreTab, setActiveLearnMoreTab] = useState<
+    "text" | "video"
+  >("text");
+
+  // Helper function to convert relative image URLs to absolute backend URLs
+  const getFullImageUrl = (relativeUrl: string) => {
+    if (relativeUrl.startsWith("http")) {
+      return relativeUrl; // Already absolute
+    }
+    // Convert relative URL to absolute backend URL
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    return `${backendUrl}${relativeUrl}`;
+  };
 
   const handleShowOverlay = (type: "carousel" | "text" | "learnMore") => {
     console.log("handleShowOverlay called with type:", type);
@@ -51,6 +68,7 @@ export default function ResultsPage() {
     } else if (type === "learnMore") {
       console.log("Setting showLearnMore to true");
       setShowLearnMore(true);
+      setActiveLearnMoreTab("text"); // Reset to text tab when opening
     }
     // Reset animation state after animation completes
     setTimeout(() => {}, 800);
@@ -128,6 +146,22 @@ export default function ResultsPage() {
     const commonCardStyle =
       "h-full w-1/3 relative rounded-2xl overflow-hidden border border-neutral-200 dark:border-white/[0.1] flex items-center justify-center text-center";
 
+    // Use actual analogy images if available, otherwise fallback to placeholders
+    const imageUrls = analogy?.analogy_images || [];
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+    const getImageUrl = (index: number) => {
+      if (imageUrls[index]) {
+        const relativeUrl = imageUrls[index];
+        return relativeUrl.startsWith("http")
+          ? relativeUrl
+          : `${backendUrl}${relativeUrl}`;
+      }
+      // Fallback to frontend placeholder images for preview
+      return `/assets/placeholder_image${index + 1}.png`;
+    };
+
     return (
       <motion.div
         initial="initial"
@@ -138,7 +172,7 @@ export default function ResultsPage() {
         <motion.div variants={first} className={cn(commonCardStyle, "z-10")}>
           <div
             className="absolute inset-0 w-full h-full bg-cover bg-top z-0"
-            style={{ backgroundImage: "url('/assets/placeholder_image1.png')" }}
+            style={{ backgroundImage: `url('${getImageUrl(0)}')` }}
           />
         </motion.div>
 
@@ -146,7 +180,7 @@ export default function ResultsPage() {
           <div
             className="absolute inset-0 w-full h-full bg-cover bg-top z-0"
             style={{
-              backgroundImage: "url('/assets/placeholder_image2.png')",
+              backgroundImage: `url('${getImageUrl(1)}')`,
             }}
           />
         </motion.div>
@@ -155,7 +189,7 @@ export default function ResultsPage() {
           <div
             className="absolute inset-0 w-full h-full bg-cover bg-bottom z-0"
             style={{
-              backgroundImage: "url('/assets/placeholder_image3.png')",
+              backgroundImage: `url('${getImageUrl(2)}')`,
             }}
           />
         </motion.div>
@@ -195,34 +229,64 @@ export default function ResultsPage() {
         whileHover="animate"
         className="flex flex-1 w-full h-full min-h-[6rem] dark:bg-dot-white/[0.2] bg-dot-black/[0.2] flex-col space-y-2"
       >
+        {/* Tab-like header */}
         <motion.div
           variants={variants}
-          className="flex flex-row rounded-2xl border border-neutral-100 dark:border-white/[0.2] p-2  items-start space-x-2 bg-white dark:bg-black"
+          className="flex justify-center space-x-2 mb-2"
         >
-          <img
-            src="/assets/GoogleLogo.jpeg"
-            alt="avatar"
-            height="100"
-            width="100"
-            className="rounded-full h-10 w-10"
-          />
-          <p className="text-xs text-neutral-500">
-            Training a machine learning model is a complex process that requires
-            data, time, and resources.
-          </p>
+          <div className="w-16 h-6 bg-purple-500/30 rounded-lg"></div>
+          <div className="w-16 h-6 bg-gray-700/50 rounded-lg"></div>
         </motion.div>
+
+        {/* Content items */}
+        <motion.div
+          variants={variants}
+          className="flex flex-row rounded-2xl border border-neutral-100 dark:border-white/[0.2] p-2 items-start space-x-2 bg-white dark:bg-black"
+        >
+          <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+            <svg
+              className="w-5 h-5 text-purple-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+              />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <div className="w-3/4 h-3 bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
+            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
+        </motion.div>
+
         <motion.div
           variants={variantsSecond}
-          className="flex flex-row rounded-full border border-neutral-100 dark:border-white/[0.2] p-2 items-center justify-end space-x-2 w-3/4 ml-auto bg-white dark:bg-black"
+          className="flex flex-row rounded-2xl border border-neutral-100 dark:border-white/[0.2] p-2 items-start space-x-2 bg-white dark:bg-black"
         >
-          <p className="text-xs text-neutral-500">Nvidia RTX 4090</p>
-          <img
-            src="/assets/RedditLogo.png"
-            alt="avatar"
-            height="60"
-            width="60"
-            className="rounded-full h-6 w-6"
-          />
+          <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+            <svg
+              className="w-5 h-5 text-purple-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <div className="w-2/3 h-3 bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
+            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          </div>
         </motion.div>
       </motion.div>
     );
@@ -265,7 +329,11 @@ export default function ResultsPage() {
         const id = params.id as string;
         const data = await api.getAnalogy(id);
         setAnalogy(data);
-        
+
+        // Debug: Log the analogy data and image URLs
+        console.log("Fetched analogy data:", data);
+        console.log("Analogy images:", data.analogy_images);
+
         // Check if this analogy should show the streak popup
         if (data.streak_popup_shown === false && user && !hasShownStreakModal) {
           // Refresh streak data before showing the modal to ensure we have the latest data
@@ -290,7 +358,7 @@ export default function ResultsPage() {
   // Handle modal close and mark popup as shown
   const handleStreakModalClose = async () => {
     setShowStreakModal(false);
-    
+
     // Mark the streak popup as shown in the database
     if (analogy && user) {
       try {
@@ -321,16 +389,19 @@ export default function ResultsPage() {
 
     try {
       setIsRegenerating(true);
-      
+
       // Create a new AbortController for this request
       const controller = new AbortController();
       setRegenerateAbortController(controller);
-      
-      const newAnalogy = await api.regenerateAnalogy(analogy.id, controller.signal);
+
+      const newAnalogy = await api.regenerateAnalogy(
+        analogy.id,
+        controller.signal
+      );
 
       // Wait a moment for the backend to complete all updates (streak, lifetime count, etc.)
       // This ensures the database is fully updated before we fetch the latest data
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Refresh streak data to get the latest information before redirecting
       // This ensures the new results page will have the most up-to-date streak data
@@ -344,12 +415,17 @@ export default function ResultsPage() {
       // Navigate to the new analogy's results page
       router.push(`/results/${newAnalogy.id}`);
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === "AbortError") {
         console.log("Analogy regeneration was cancelled by user");
         // Don't show error message for user-initiated cancellation
       } else {
         console.error("Error regenerating analogy:", error);
-        alert("Failed to regenerate analogy. Please try again.");
+        showNotification({
+          title: "Regeneration Failed",
+          message: "Failed to regenerate analogy. Please try again.",
+          type: "error",
+          confirmText: "OK",
+        });
       }
     } finally {
       setIsRegenerating(false);
@@ -401,7 +477,7 @@ export default function ResultsPage() {
             duration={3000}
             containerClassName="w-auto h-auto"
             borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
-            className="bg-purple-700 hover:bg-purple-700 px-6 py-3 font-medium border border-white/50 text-white shadow-md transition"
+            className="min-w-[240px] px-8 py-3 rounded-lg font-medium transition bg-purple-700 hover:bg-purple-800 border border-purple-500/50 text-white shadow-md text-base"
           >
             Generate New Analogy
           </MovingBorderButton>
@@ -656,11 +732,15 @@ export default function ResultsPage() {
                   >
                     <div className="w-full">
                       <Carousel
-                        slides={analogy.analogy_images.map((src, i) => ({
-                          src,
-                          id: `${analogy.id}`,
-                          analogy: filteredAnalogy,
-                        }))}
+                        slides={analogy.analogy_images.map((src, i) => {
+                          const fullSrc = getFullImageUrl(src);
+                          const slide = {
+                            src: fullSrc,
+                            id: `${analogy.id}`,
+                            analogy: filteredAnalogy,
+                          };
+                          return slide;
+                        })}
                       />
                     </div>
                   </motion.div>
@@ -686,32 +766,147 @@ export default function ResultsPage() {
                         </p>
                       </motion.div>
 
+                      {/* Tab Navigation */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.5 }}
+                        className="flex justify-center space-x-2"
+                      >
+                        <button
+                          onClick={() => setActiveLearnMoreTab("text")}
+                          className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
+                            activeLearnMoreTab === "text"
+                              ? "bg-purple-600 text-white shadow-lg"
+                              : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                              />
+                            </svg>
+                            <span>Text Sources</span>
+                            {analogy.analogy.textLinks &&
+                              analogy.analogy.textLinks.length > 0 && (
+                                <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                                  {analogy.analogy.textLinks.length}
+                                </span>
+                              )}
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => setActiveLearnMoreTab("video")}
+                          className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
+                            activeLearnMoreTab === "video"
+                              ? "bg-purple-600 text-white shadow-lg"
+                              : "bg-gray-700/50 text-gray-300 hover:bg-gray-600/50"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                              />
+                            </svg>
+                            <span>Video Sources</span>
+                            {analogy.analogy.videoLinks &&
+                              analogy.analogy.videoLinks.length > 0 && (
+                                <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                                  {analogy.analogy.videoLinks.length}
+                                </span>
+                              )}
+                          </div>
+                        </button>
+                      </motion.div>
+
+                      {/* Tab Content */}
                       <div className="space-y-4 sm:space-y-6">
-                        {analogy.analogy.learnMoreLinks &&
-                        analogy.analogy.learnMoreLinks.length > 0 ? (
-                          analogy.analogy.learnMoreLinks.map(
-                            (link: string, index: number) => (
-                              <motion.div
-                                key={index}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{
-                                  duration: 0.5,
-                                  delay: 0.6 + index * 0.1,
-                                }}
-                                className="group"
-                              >
-                                <a
-                                  href={link}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block p-4 sm:p-6 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600/50 hover:border-purple-500/50 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
+                        {activeLearnMoreTab === "text" ? (
+                          // Text Sources Tab
+                          analogy.analogy.textLinks &&
+                          analogy.analogy.textLinks.length > 0 ? (
+                            analogy.analogy.textLinks.map(
+                              (link: any, index: number) => (
+                                <motion.div
+                                  key={index}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{
+                                    duration: 0.5,
+                                    delay: 0.6 + index * 0.1,
+                                  }}
+                                  className="group"
                                 >
-                                  <div className="flex items-center space-x-3 sm:space-x-4">
-                                    <div className="flex-shrink-0">
-                                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors duration-300">
+                                  <a
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block p-4 sm:p-6 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600/50 hover:border-purple-500/50 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
+                                  >
+                                    <div className="flex items-start space-x-3 sm:space-x-4">
+                                      <div className="flex-shrink-0">
+                                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors duration-300">
+                                          <svg
+                                            className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                            />
+                                          </svg>
+                                        </div>
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <h3 className="text-sm sm:text-base md:text-lg text-gray-200 group-hover:text-white transition-colors duration-300 font-medium mb-1">
+                                          {link.title}
+                                        </h3>
+                                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mb-2 line-clamp-2">
+                                          {link.description}
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                                          {link.source && (
+                                            <span className="bg-gray-700/50 px-2 py-1 rounded">
+                                              {link.source}
+                                            </span>
+                                          )}
+                                          {link.publisher && (
+                                            <span className="bg-gray-700/50 px-2 py-1 rounded">
+                                              {link.publisher}
+                                            </span>
+                                          )}
+                                          {link.published && (
+                                            <span className="bg-gray-700/50 px-2 py-1 rounded">
+                                              {link.published}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="flex-shrink-0">
                                         <svg
-                                          className="w-4 h-4 sm:w-5 sm:h-5 text-purple-400"
+                                          className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-purple-400 transition-colors duration-300"
                                           fill="none"
                                           stroke="currentColor"
                                           viewBox="0 0 24 24"
@@ -725,16 +920,116 @@ export default function ResultsPage() {
                                         </svg>
                                       </div>
                                     </div>
+                                  </a>
+                                </motion.div>
+                              )
+                            )
+                          ) : (
+                            <motion.div
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.5, delay: 0.6 }}
+                              className="text-center py-8 sm:py-12"
+                            >
+                              <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 bg-gray-700/50 rounded-full flex items-center justify-center">
+                                <svg
+                                  className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                                  />
+                                </svg>
+                              </div>
+                              <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-300 mb-2">
+                                No Text Sources Available
+                              </h3>
+                              <p className="text-sm sm:text-base text-gray-400">
+                                Check back later for additional text resources
+                              </p>
+                            </motion.div>
+                          )
+                        ) : // Video Sources Tab
+                        analogy.analogy.videoLinks &&
+                          analogy.analogy.videoLinks.length > 0 ? (
+                          analogy.analogy.videoLinks.map(
+                            (link: any, index: number) => (
+                              <motion.div
+                                key={index}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{
+                                  duration: 0.5,
+                                  delay: 0.6 + index * 0.1,
+                                }}
+                                className="group"
+                              >
+                                <a
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="block p-4 sm:p-6 bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600/50 hover:border-purple-500/50 rounded-lg transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg"
+                                >
+                                  <div className="flex items-start space-x-3 sm:space-x-4">
+                                    <div className="flex-shrink-0">
+                                      {link.thumbnail ? (
+                                        <img
+                                          src={link.thumbnail}
+                                          alt={link.title}
+                                          className="w-16 h-12 sm:w-20 sm:h-15 rounded-lg object-cover"
+                                        />
+                                      ) : (
+                                        <div className="w-16 h-12 sm:w-20 sm:h-15 bg-purple-500/20 rounded-lg flex items-center justify-center group-hover:bg-purple-500/30 transition-colors duration-300">
+                                          <svg
+                                            className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                                            />
+                                          </svg>
+                                        </div>
+                                      )}
+                                    </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className="text-sm sm:text-base md:text-lg text-gray-200 group-hover:text-white transition-colors duration-300 font-medium truncate">
-                                        {new URL(link).hostname.replace(
-                                          "www.",
-                                          ""
+                                      <h3 className="text-sm sm:text-base md:text-lg text-gray-200 group-hover:text-white transition-colors duration-300 font-medium mb-1">
+                                        {link.title}
+                                      </h3>
+                                      <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mb-2 line-clamp-2">
+                                        {link.description}
+                                      </p>
+                                      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                                        {link.source && (
+                                          <span className="bg-gray-700/50 px-2 py-1 rounded">
+                                            {link.source}
+                                          </span>
                                         )}
-                                      </p>
-                                      <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 truncate">
-                                        {link}
-                                      </p>
+                                        {link.publisher && (
+                                          <span className="bg-gray-700/50 px-2 py-1 rounded">
+                                            {link.publisher}
+                                          </span>
+                                        )}
+                                        {link.creator && (
+                                          <span className="bg-gray-700/50 px-2 py-1 rounded">
+                                            {link.creator}
+                                          </span>
+                                        )}
+                                        {link.published && (
+                                          <span className="bg-gray-700/50 px-2 py-1 rounded">
+                                            {link.published}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
                                     <div className="flex-shrink-0">
                                       <svg
@@ -747,7 +1042,7 @@ export default function ResultsPage() {
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
                                           strokeWidth={2}
-                                          d="M9 5l7 7-7 7"
+                                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                                         />
                                       </svg>
                                     </div>
@@ -774,15 +1069,15 @@ export default function ResultsPage() {
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
                                   strokeWidth={2}
-                                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
                                 />
                               </svg>
                             </div>
                             <h3 className="text-lg sm:text-xl md:text-2xl font-semibold text-gray-300 mb-2">
-                              No Resources Available
+                              No Video Sources Available
                             </h3>
                             <p className="text-sm sm:text-base text-gray-400">
-                              Check back later for additional learning resources
+                              Check back later for additional video resources
                             </p>
                           </motion.div>
                         )}

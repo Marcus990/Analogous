@@ -2,31 +2,28 @@ import React, { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MovingBorderButton } from "./MovingBorder";
 import { BackgroundGradient } from "./BackgroundGradient";
-import { IconAlertTriangle, IconX } from "@tabler/icons-react";
+import { IconX, IconAlertTriangle, IconInfoCircle, IconCircleCheck } from "@tabler/icons-react";
 
-interface ConfirmationModalProps {
+interface NotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
   title: string;
   message: string;
+  type?: "success" | "warning" | "error" | "info";
   confirmText?: string;
-  cancelText?: string;
-  type?: "danger" | "warning" | "info";
+  showConfirmButton?: boolean;
 }
 
-export default function ConfirmationModal({
+export default function NotificationModal({
   isOpen,
   onClose,
-  onConfirm,
   title,
   message,
-  confirmText = "Confirm",
-  cancelText = "Cancel",
-  type = "danger",
-}: ConfirmationModalProps) {
+  type = "info",
+  confirmText = "OK",
+  showConfirmButton = true,
+}: NotificationModalProps) {
   const handleConfirm = () => {
-    onConfirm();
     onClose();
   };
 
@@ -49,29 +46,49 @@ export default function ConfirmationModal({
   }, [isOpen]);
 
   const getIconColor = () => {
+    return "text-purple-400";
+    // switch (type) {
+    //   case "success":
+    //     return "text-green-400";
+    //   case "warning":
+    //     return "text-yellow-400";
+    //   case "error":
+    //     return "text-red-400";
+    //   case "info":
+    //     return "text-blue-400";
+    //   default:
+    //     return "text-blue-400";
+    // }
+  };
+
+  const getIcon = () => {
     switch (type) {
-      case "danger":
-        return "text-red-400";
+      case "success":
+        return <IconCircleCheck className="w-5 h-5 sm:w-6 sm:h-6" />;
       case "warning":
-        return "text-yellow-400";
+      case "error":
+        return <IconAlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />;
       case "info":
-        return "text-blue-400";
+        return <IconInfoCircle className="w-5 h-5 sm:w-6 sm:h-6" />;
       default:
-        return "text-red-400";
+        return <IconInfoCircle className="w-5 h-5 sm:w-6 sm:h-6" />;
     }
   };
 
   const getConfirmButtonStyle = () => {
-    switch (type) {
-      case "danger":
-        return "bg-red-600 hover:bg-red-700 border-red-500/50";
-      case "warning":
-        return "bg-yellow-600 hover:bg-yellow-700 border-yellow-500/50";
-      case "info":
-        return "bg-blue-600 hover:bg-blue-700 border-blue-500/50";
-      default:
-        return "bg-red-600 hover:bg-red-700 border-red-500/50";
-    }
+    return "bg-purple-700 hover:bg-purple-800 border-purple-500/50";
+    // switch (type) {
+    //   case "success":
+    //     return "bg-green-600 hover:bg-green-700 border-green-500/50";
+    //   case "warning":
+    //     return "bg-yellow-600 hover:bg-yellow-700 border-yellow-500/50";
+    //   case "error":
+    //     return "bg-red-600 hover:bg-red-700 border-red-500/50";
+    //   case "info":
+    //     return "bg-blue-600 hover:bg-blue-700 border-blue-500/50";
+    //   default:
+    //     return "bg-blue-600 hover:bg-blue-700 border-blue-500/50";
+    // }
   };
 
   return (
@@ -81,7 +98,7 @@ export default function ConfirmationModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          className="pointer-events-auto fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
           onClick={handleBackdropClick}
         >
           <motion.div
@@ -108,7 +125,7 @@ export default function ConfirmationModal({
                     <div
                       className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center ${getIconColor()}`}
                     >
-                      <IconAlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
+                      {getIcon()}
                     </div>
                   </div>
 
@@ -122,32 +139,21 @@ export default function ConfirmationModal({
                     {message}
                   </p>
 
-                  {/* Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                    {/* Button 1 */}
-                    <div className="w-full sm:w-1/2">
-                      <button
-                        onClick={onClose}
-                        className="w-full h-12 px-4 rounded-lg font-medium transition bg-gray-700 hover:bg-gray-600 border border-gray-600/50 text-white shadow-md text-base"
-                      >
-                        {cancelText}
-                      </button>
-                    </div>
-
-                    {/* Button 2 */}
-                    <div className="w-full sm:w-1/2">
+                  {/* Button */}
+                  {showConfirmButton && (
+                    <div className="flex justify-center">
                       <MovingBorderButton
                         onClick={handleConfirm}
                         borderRadius="0.5rem"
                         duration={3000}
-                        containerClassName="w-full h-12"
+                        containerClassName="w-full sm:w-auto"
                         borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
-                        className={`w-full h-full px-4 rounded-lg font-medium transition border text-white shadow-md text-base ${getConfirmButtonStyle()}`}
+                        className={`w-full sm:w-auto h-12 px-6 rounded-lg font-medium transition border text-white shadow-md text-base ${getConfirmButtonStyle()}`}
                       >
                         {confirmText}
                       </MovingBorderButton>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </BackgroundGradient>
@@ -156,4 +162,4 @@ export default function ConfirmationModal({
       )}
     </AnimatePresence>
   );
-}
+} 

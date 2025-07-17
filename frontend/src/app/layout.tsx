@@ -4,6 +4,7 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import { AuthProvider } from "@/lib/auth";
 import { StreakProvider } from "@/lib/streakContext";
+import { NotificationProvider } from "@/lib/notificationContext";
 import Footer from "@/components/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,11 +22,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} bg-black min-h-screen text-white`}>
         <AuthProvider>
-          <StreakProvider>
-            <Navigation />
-            <main>{children}</main>
-            <Footer />
-          </StreakProvider>
+          <NotificationProvider>
+            <StreakProvider>
+              <Navigation />
+              <main>{children}</main>
+              <Footer />
+            </StreakProvider>
+          </NotificationProvider>
         </AuthProvider>
       </body>
     </html>

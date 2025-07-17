@@ -4,13 +4,15 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StreakModal from "./StreakModal";
 import { IconFlame } from "@tabler/icons-react";
 import { useStreak } from "@/lib/streakContext";
+import { useRouter } from "next/navigation";
 
 export default function Navigation() {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const { streakData, loadingStreak } = useStreak();
   const [showStreakModal, setShowStreakModal] = useState(false);
