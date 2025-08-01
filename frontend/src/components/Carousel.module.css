@@ -55,6 +55,15 @@
   width: 90%;
 }
 
+/* CENTER bubble - for slides 2, 4, 6 */
+.speech-bubble-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  bottom: auto;
+}
+
 .speech-bubble-third {
   bottom: 1rem;
   left: 1rem;
@@ -365,5 +374,115 @@
     padding: clamp(0.5rem, 1.5vw, 1.5rem) clamp(1rem, 2vw, 2rem);
     max-width: 40%;
     min-width: 80px;
+  }
+}
+
+/* Bold markdown text styling */
+.bold-markdown-text {
+  font-family: "KomikaHandBoldItalic", cursive !important;
+  font-weight: bold !important;
+  font-style: italic !important;
+  font-size: clamp(0.5rem, 2.8vw, 1.1rem) !important;
+  color: inherit !important;
+  /* Ensure bold text doesn't disrupt line height */
+  line-height: inherit !important;
+  vertical-align: baseline !important;
+  display: inline !important;
+}
+
+/* PNG Speech Bubble - Auto-scaling with text content */
+.png-speech-bubble {
+  position: absolute;
+  z-index: 100;
+  background-image: url('/assets/SpeechBubble.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-width: 200px;
+  min-height: 100px;
+  max-width: 1200px;
+  max-height: 600px;
+  box-sizing: border-box;
+  /* CSS custom properties for dynamic sizing */
+  --min-bubble-width: 200px;
+  --min-bubble-height: 100px;
+}
+
+.png-speech-bubble-content {
+  text-align: left;
+  font-family: "KomikaHand", cursive;
+  font-size: clamp(2px, 2.5vw, 16px);
+  font-weight: bold;
+  color: black;
+  line-height: 1.4;
+  padding: clamp(0.5em, 2vw, 1em);
+  box-sizing: border-box;
+
+  /* Let text wrap naturally */
+  word-wrap: break-word;
+  white-space: normal;
+
+  /* Keep as block display */
+  display: block;
+
+  /* Optional debug border */
+  border: 2px solid red;
+  
+  /* Auto-size to fit content with 1920x1280 aspect ratio */
+  width: fit-content;
+  height: fit-content;
+  min-width: 100px;
+  min-height: 50px;
+  
+  /* Center the text box within the PNG bubble using absolute positioning */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+/* PNG Speech Bubble positions - same as original speech bubbles */
+.png-speech-bubble-primary {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.png-speech-bubble-secondary {
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.png-speech-bubble-third {
+  bottom: 1rem;
+  left: 1rem;
+}
+
+.png-speech-bubble-fourth {
+  bottom: 1rem;
+  right: 1rem;
+}
+
+/* Responsive adjustments for PNG speech bubbles */
+@media (max-width: 640px) {
+  .png-speech-bubble-content {
+    font-size: clamp(6px, 2.2vw, 10px);
+    padding: clamp(0.4em, 2.5vw, 0.8em);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .png-speech-bubble-content {
+    font-size: clamp(7px, 1.6vw, 12px);
+    padding: clamp(0.5em, 1.8vw, 0.9em);
+  }
+}
+
+@media (min-width: 1025px) {
+  .png-speech-bubble-content {
+    font-size: clamp(8px, 1.4vw, 14px);
+    padding: clamp(0.6em, 1.5vw, 1em);
   }
 }

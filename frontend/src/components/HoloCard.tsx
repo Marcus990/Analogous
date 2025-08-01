@@ -227,17 +227,17 @@ export const HoloCard = ({
 
           {/* Dropdown menu */}
           {isMenuOpen && (
-            <div className="absolute top-8 right-0 bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg shadow-lg min-w-[120px] sm:min-w-[140px] md:min-w-[160px] z-[99999] animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="absolute top-8 right-0 bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg shadow-lg min-w-[90px] sm:min-w-[110px] md:min-w-[130px] z-[99999] animate-in fade-in-0 zoom-in-95 duration-200">
               <div className="py-1">
                 <button
                   onClick={handleDropToTopic}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-white hover:bg-white/10 transition-colors duration-200 text-xs sm:text-sm md:text-base"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-white hover:bg-white/10 transition-colors duration-200 text-xs sm:text-xs"
                 >
                   Drop to Topic
                 </button>
                 <button
                   onClick={handleDropToAudience}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-white hover:bg-white/10 transition-colors duration-200 text-xs sm:text-sm md:text-base"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-white hover:bg-white/10 transition-colors duration-200 text-xs sm:text-xs"
                 >
                   Drop to Audience
                 </button>
@@ -246,7 +246,7 @@ export const HoloCard = ({
                     <div className="border-t border-white/20 my-1"></div>
                     <button
                       onClick={handleRemove}
-                      className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-white hover:bg-white/10 transition-colors duration-200 text-xs sm:text-sm md:text-base"
+                      className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-white hover:bg-white/10 transition-colors duration-200 text-xs sm:text-xs"
                     >
                       Remove
                     </button>
@@ -255,7 +255,7 @@ export const HoloCard = ({
                 <div className="border-t border-white/20 my-1"></div>
                 <button
                   onClick={handleDelete}
-                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-red-400 hover:bg-red-500/20 transition-colors duration-200 text-xs sm:text-sm md:text-base"
+                  className="w-full px-2 sm:px-3 py-1.5 sm:py-2 text-left text-red-400 hover:bg-red-500/20 transition-colors duration-200 text-xs sm:text-sm"
                 >
                   Delete
                 </button>

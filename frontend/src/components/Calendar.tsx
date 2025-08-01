@@ -20,19 +20,25 @@ export default function Calendar({
 }: CalendarProps) {
   const [isNavigating, setIsNavigating] = useState(false);
 
+  // Get user's timezone
+  const getUserTimezone = () => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    } catch (error) {
+      console.warn("Could not get user timezone, falling back to UTC:", error);
+      return "UTC";
+    }
+  };
+
   // Convert active streak dates to Date objects for easier comparison
   const activeDates = useMemo(() => {
-    const dates = activeStreakDates.map((dateStr) => {
-      // Parse the date string and create a date object
-      const date = new Date(dateStr);
-      // Return just the date part (YYYY-MM-DD) for consistent comparison
-      return date.toISOString().split("T")[0];
-    });
+    // The activeStreakDates are already in YYYY-MM-DD format from the backend
+    // No need to convert them again
+    const dates = activeStreakDates;
     console.log("Active streak dates:", activeStreakDates);
-    console.log("Processed active dates:", dates);
 
-    // Test the date comparison logic
-    const today = new Date().toISOString().split("T")[0];
+    // Test the date comparison logic - use user's local date
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format in user's timezone
     console.log("Today's date for comparison:", today);
     console.log("Is today in active dates?", dates.includes(today));
 
@@ -49,15 +55,15 @@ export default function Calendar({
     const days = [];
     const currentDate = new Date(startDate);
 
-    // Get today's date in YYYY-MM-DD format for consistent comparison
-    const today = new Date().toISOString().split("T")[0];
+    // Get today's date in YYYY-MM-DD format for consistent comparison - use user's local date
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format in user's timezone
     console.log("Today's date:", today);
 
     // Generate 6 weeks of calendar days (42 days total)
     for (let i = 0; i < 42; i++) {
       const date = new Date(currentDate);
       const isCurrentMonth = date.getMonth() === selectedMonth - 1;
-      const dateString = date.toISOString().split("T")[0];
+      const dateString = date.toLocaleDateString('en-CA'); // YYYY-MM-DD format in user's timezone
       const isToday = dateString === today;
       const isActiveStreak = activeDates.includes(dateString);
 

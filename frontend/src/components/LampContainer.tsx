@@ -35,7 +35,7 @@ export const LampContainer = ({
             style={{
               backgroundImage: `conic-gradient(var(--conic-position), var(--tw-gradient-stops))`,
             }}
-            className="absolute right-1/2 h-56 w-[30rem] bg-gradient-conic from-purple-500 via-transparent to-transparent [--conic-position:from_70deg_at_center_top]"
+            className="absolute right-1/2 h-56 w-[30rem] bg-gradient-conic from-purple-700 via-transparent to-transparent [--conic-position:from_70deg_at_center_top]"
           >
             <div className="absolute w-full left-0 h-40 bottom-0 z-20 bg-black [mask-image:linear-gradient(to_top,white,transparent)]" />
             <div className="absolute w-40 h-full left-0 bottom-0 z-20 bg-black [mask-image:linear-gradient(to_right,white,transparent)]" />
@@ -48,7 +48,7 @@ export const LampContainer = ({
             style={{
               backgroundImage: `conic-gradient(var(--conic-position), var(--tw-gradient-stops))`,
             }}
-            className="absolute left-1/2 h-56 w-[30rem] bg-gradient-conic from-transparent via-transparent to-purple-500 [--conic-position:from_290deg_at_center_top]"
+            className="absolute left-1/2 h-56 w-[30rem] bg-gradient-conic from-transparent via-transparent to-purple-700 [--conic-position:from_290deg_at_center_top]"
           >
             <div className="absolute w-40 h-full right-0 bottom-0 z-20 bg-black [mask-image:linear-gradient(to_left,white,transparent)]" />
             <div className="absolute w-full right-0 h-40 bottom-0 z-20 bg-black [mask-image:linear-gradient(to_top,white,transparent)]" />
@@ -56,7 +56,7 @@ export const LampContainer = ({
 
           <div className="absolute top-1/2 h-48 w-full translate-y-12 scale-x-150 bg-black blur-2xl"></div>
           <div className="absolute top-1/2 z-50 h-48 w-full bg-transparent opacity-10 backdrop-blur-md"></div>
-          <div className="absolute z-50 h-36 w-[28rem] -translate-y-1/2 rounded-full bg-purple-500 opacity-50 blur-3xl"></div>
+          <div className="absolute z-50 h-36 w-[28rem] -translate-y-1/2 rounded-full bg-purple-700 opacity-50 blur-3xl"></div>
           <motion.div
             initial={{ width: "8rem" }}
             animate={{ width: "16rem" }}

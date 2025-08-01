@@ -6,6 +6,108 @@ import { useStreak } from "@/lib/streakContext";
 
 import styles from "@/components/Carousel.module.css";
 
+// COMMENTED OUT - Dynamic Speech Bubble Component that measures text and adjusts size
+/*
+const DynamicSpeechBubble = ({ content, className }: { content: string; className: string }) => {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const bubbleRef = useRef<HTMLDivElement>(null);
+  const [bubbleSize, setBubbleSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const updateSize = () => {
+      if (contentRef.current && bubbleRef.current) {
+        // Get the computed styles to access CSS custom properties
+        const computedStyle = getComputedStyle(bubbleRef.current);
+        const minWidth = parseInt(computedStyle.getPropertyValue('--min-bubble-width')) || 200;
+        const minHeight = parseInt(computedStyle.getPropertyValue('--min-bubble-height')) || 100;
+        
+        // Get the actual content dimensions
+        const contentRect = contentRef.current.getBoundingClientRect();
+        
+        // Step 1: Create invisible text box that wraps text at 1920x1280 ratio
+        const textBoxAspectRatio = 1.5; // 1920x1280 ratio
+        
+        // Add padding to ensure text doesn't touch the edges of the text box
+        const textPadding = 40;
+        const paddedContentWidth = contentRect.width + textPadding;
+        const paddedContentHeight = contentRect.height + textPadding;
+        
+        // Calculate text box dimensions maintaining aspect ratio
+        let textBoxWidth, textBoxHeight;
+        
+        // Always use the larger dimension as the constraint to maintain aspect ratio
+        if (paddedContentWidth > paddedContentHeight * textBoxAspectRatio) {
+          // Content is wider than aspect ratio, use width as constraint
+          textBoxWidth = paddedContentWidth;
+          textBoxHeight = paddedContentWidth / textBoxAspectRatio;
+        } else {
+          // Content is taller than aspect ratio, use height as constraint
+          textBoxHeight = paddedContentHeight;
+          textBoxWidth = paddedContentHeight * textBoxAspectRatio;
+        }
+        
+        // Step 2: Scale PNG bubble so text box takes up 70% of PNG bubble width
+        const textBoxPercentage = 0.75; // 75%
+        const pngBubbleWidth = textBoxWidth / textBoxPercentage;
+        const pngBubbleHeight = pngBubbleWidth / textBoxAspectRatio; // Maintain 1920x1280 ratio
+
+        
+        // Ensure minimum dimensions
+        const finalWidth = Math.max(pngBubbleWidth, minWidth);
+        const finalHeight = Math.max(pngBubbleHeight, minHeight);
+        
+        // Debug logging
+        console.log('DynamicSpeechBubble sizing:', {
+          contentRect: { width: contentRect.width, height: contentRect.height },
+          textBoxWidth,
+          textBoxHeight,
+          pngBubbleWidth,
+          pngBubbleHeight,
+          finalWidth,
+          finalHeight,
+          minWidth,
+          minHeight
+        });
+        
+        setBubbleSize({ width: finalWidth, height: finalHeight });
+      }
+    };
+
+    // Update size after content renders and on window resize
+    const timer = setTimeout(updateSize, 100);
+    const timer2 = setTimeout(updateSize, 500); // Second attempt after more time
+    window.addEventListener('resize', updateSize);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+      window.removeEventListener('resize', updateSize);
+    };
+  }, [content]);
+
+  return (
+    <div 
+      ref={bubbleRef}
+      className={`${styles["png-speech-bubble"]} ${className}`}
+      style={{
+        width: bubbleSize.width > 0 ? `${bubbleSize.width}px` : 'auto',
+        height: bubbleSize.height > 0 ? `${bubbleSize.height}px` : 'auto',
+      }}
+    >
+      <div 
+        ref={contentRef}
+        className={styles["png-speech-bubble-content"]}
+        style={{
+          width: bubbleSize.width > 0 ? `${bubbleSize.width * 0.75}px` : 'auto',
+          height: bubbleSize.height > 0 ? `${bubbleSize.height * 0.8}px` : 'auto',
+        }}
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    </div>
+  );
+};
+*/
+
 interface SlideData {
   analogy: Record<string, string>;
   src: string;
@@ -14,6 +116,7 @@ interface SlideData {
   isTitlePage?: boolean;
   isBackCover?: boolean;
   originalSlides?: SlideData[]; // Add this for title page
+  background_image?: string; // Add background image for title page
 }
 
 interface SlideProps {
@@ -158,11 +261,11 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
     // Remove all newlines and triple dashes
     const sanitized = text.replace(/\n/g, " ").replace(/---/g, "");
 
-    // Replace **bold** syntax with styled span
+    // Replace **bold** syntax with styled span using CSS module class
     const html = sanitized.replace(
       /\*\*(.*?)\*\*/g,
       (_, match) =>
-        `<span style="font-family: KomikaHandBoldItalic, cursive; font-weight: bold; font-style: italic; font-size: clamp(0.5rem, 2.8vw, 1.1rem);">${match}</span>`
+        `<span class="${styles['bold-markdown-text']}">${match}</span>`
     );
 
     return html;
@@ -193,58 +296,84 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
           transformOrigin: "bottom",
         }}
       >
-        <BackgroundGradient containerClassName="absolute top-0 left-0 w-full h-full rounded-lg overflow-hidden p-1">
-          <div className="relative w-full h-full">
+        {/* <BackgroundGradient containerClassName="absolute top-0 left-0 w-full h-full rounded-lg overflow-hidden p-1"> */}
+          <div className="relative w-full h-full rounded-xl border-white border-2 md:border-[0.25rem]">
+          <div className="relative w-full h-full rounded-xl border-black border-2 md:border-[0.25rem] z-[999]">
             {slide.isTitlePage ? (
               // Title page layout
-              <div className="w-full h-full bg-gradient-to-r from-gray-900 to-gray-600 rounded-lg shadow-2xl overflow-hidden relative font-[KomikaHandBoldItalic] flex flex-col">
-                {/* Comic burst spikes background */}
-                <div className="absolute inset-0 z-0 pointer-events-none">
-                  <div className="relative w-full h-full">
-                    {[...Array(48)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute left-1/2 top-1/2"
-                        style={{
-                          width: "max(2vw, 10px)", // never thinner than 10px
-                          height: "min(60vw, 60vh)", // always fits within the smallest dimension
-                          transform: `rotate(${
-                            (360 / 48) * i
-                          }deg) translateY(min(90vw, 90vh))`,
-                          transformOrigin: "center center",
-                          clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                          backgroundColor: "#e6e6e6",
-                          border: "2px solid black",
-                          boxShadow: "0 0 2px 0 #000",
-                        }}
-                      />
-                    ))}
-                    {[...Array(20)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute left-1/2 top-1/2"
-                        style={{
-                          width: "max(2vw, 10px)", // never thinner than 10px
-                          height: "min(70vw, 70vh)", // always fits within the smallest dimension
-                          transform: `rotate(${
-                            (360 / 20) * i
-                          }deg) translateY(min(90vw, 90vh))`,
-                          transformOrigin: "center center",
-                          clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-                          backgroundColor: "#a3a2a2",
-                          border: "2px solid black",
-                          boxShadow: "0 0 2px 0 #000",
-                        }}
-                      />
-                    ))}
+              <div className="w-full h-full rounded-lg shadow-2xl overflow-hidden relative font-[KomikaHandBoldItalic] flex flex-col">
+                {/* Background image - replaces gray gradient and comic burst spikes */}
+                {slide.background_image && (
+                  <div className="absolute inset-0 z-0">
+                    <img
+                      src={slide.background_image}
+                      alt="Comic background"
+                      className="w-full h-full object-cover"
+                      onLoad={() => {
+                        console.log(`Successfully loaded background image: ${slide.background_image}`);
+                      }}
+                      onError={(e) => {
+                        console.error(`Failed to load background image: ${slide.background_image}`);
+                        // Fallback to gray gradient if background image fails to load
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.parentElement!.style.background = 'linear-gradient(to right, #111827, #4B5563)';
+                      }}
+                    />
                   </div>
-                </div>
+                )}
+                {/* Fallback gray gradient and comic burst spikes only if no background image */}
+                {!slide.background_image && (
+                  <>
+                    <div className="absolute inset-0 z-0 bg-gradient-to-r from-gray-900 to-gray-600" />
+                    {/* Comic burst spikes background */}
+                    <div className="absolute inset-0 z-0 pointer-events-none">
+                      <div className="relative w-full h-full">
+                        {[...Array(48)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="absolute left-1/2 top-1/2"
+                            style={{
+                              width: "max(2vw, 10px)", // never thinner than 10px
+                              height: "min(60vw, 60vh)", // always fits within the smallest dimension
+                              transform: `rotate(${
+                                (360 / 48) * i
+                              }deg) translateY(min(90vw, 90vh))`,
+                              transformOrigin: "center center",
+                              clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
+                              backgroundColor: "#e6e6e6",
+                              border: "2px solid black",
+                              boxShadow: "0 0 2px 0 #000",
+                            }}
+                          />
+                        ))}
+                        {[...Array(20)].map((_, i) => (
+                          <div
+                            key={i}
+                            className="absolute left-1/2 top-1/2"
+                            style={{
+                              width: "max(2vw, 10px)", // never thinner than 10px
+                              height: "min(70vw, 70vh)", // always fits within the smallest dimension
+                              transform: `rotate(${
+                                (360 / 20) * i
+                              }deg) translateY(min(90vw, 90vh))`,
+                              transformOrigin: "center center",
+                              clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
+                              backgroundColor: "#a3a2a2",
+                              border: "2px solid black",
+                              boxShadow: "0 0 2px 0 #000",
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Top Purple Bar with Issue Box + Author */}
-                <div className="w-full h-8 sm:h-10 bg-gradient-to-r from-purple-500 to-blue-500 flex items-center px-2 sm:px-4 mt-[3%] sm:mt-[5%] z-10 tracking-wider">
+                <div className="w-full h-8 sm:h-10 bg-white border-black border-t-2 border-b-2 flex items-center px-2 sm:px-4 mt-[3%] sm:mt-[5%] z-10 tracking-wider">
                   <div className="flex items-center gap-2 sm:gap-4 md:gap-8 w-full">
                     {/* Top Left Sharp Box for Issue & Price */}
-                    <div className="bg-gray-200 border border-black sm:border-2 rounded-md px-2 sm:px-3 md:px-4 py-1 text-[8px] sm:text-[10px] md:text-lg font-[NewComicTitleLaserRegular] text-black flex-shrink-0">
+                    <div className="bg-white border border-black sm:border-2 rounded-md px-2 sm:px-3 md:px-4 py-1 text-[8px] sm:text-[10px] md:text-lg font-[NewComicTitleLaserRegular] text-black flex-shrink-0">
                       <p className="leading-tight">
                         Issue{" "}
                         <span className="underline">
@@ -261,7 +390,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                     </div>
 
                     {/* "By Analogous" text */}
-                    <p className="text-sm sm:text-lg md:text-xl text-white font-[NewComicTitleLaserRegular] tracking-widest flex-1 text-center">
+                    <p className="text-sm sm:text-lg md:text-xl text-black font-[NewComicTitleLaserRegular] tracking-widest flex-1 text-center">
                       By Analogous
                     </p>
                   </div>
@@ -269,7 +398,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
 
                 {/* Middle Section - Title */}
                 <div className="flex-1 flex items-center justify-center px-2 sm:px-4 md:px-6 lg:px-8 relative z-[999]">
-                  <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-[NewComicTitle3D] text-purple leading-tight transform rotate-[-10deg] w-[95%] sm:w-[90%] text-center">
+                  <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-[NewComicTitleExpanded] text-black text-bold text-stroke text-stroke-1 md:text-stroke-2 leading-tight transform rotate-[-5deg] w-[95%] sm:w-[90%] text-center">
                     {slide.analogy.title || "Analogous Comics Series"}
                   </h1>
                 </div>
@@ -313,14 +442,14 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                 </div>
 
                 {/* Background Purple Trapezoid */}
-                <div className="absolute bottom-0 left-0 w-full h-[35%] z-0">
+                {/* <div className="absolute bottom-0 left-0 w-full h-[35%] z-0">
                   <div
                     className="w-full h-full bg-gradient-to-r from-purple-500 to-blue-500"
                     style={{
                       clipPath: "polygon(0% 40%, 100% 0%, 100% 100%, 0% 100%)",
                     }}
                   />
-                </div>
+                </div> */}
               </div>
             ) : slide.isBackCover ? (
               // Back cover layout - fully responsive
@@ -377,7 +506,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                       {/* Bottom section - Barcode */}
                       <div className="flex justify-center pt-0.5 sm:pt-1 md:pt-2">
                         <div
-                          className="bg-white border border-black sm:border-2 px-1 sm:px-2 md:px-3 py-1 sm:py-2 md:py-3 rounded-md w-[60px] sm:w-[70px] md:w-[80px] lg:w-[100px] xl:w-[120px] flex-shrink-0"
+                          className="min-w-[90px] sm:min-w-[150px] bg-white border border-black sm:border-2 px-1 sm:px-2 md:px-3 py-1 sm:py-2 md:py-3 rounded-md w-[60px] sm:w-[70px] md:w-[80px] lg:w-[100px] xl:w-[120px] flex-shrink-0"
                           ref={(el) => {
                             if (!el) return;
 
@@ -442,7 +571,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
 
                   // Only apply to analogy slides (not title or back cover)
                   if (index === 1 || index === 3 || index === 5) {
-                    // Clear slides
+                    // Clear slides - using original CSS speech bubbles
                     const originalIndex = Math.floor((index - 1) / 2);
                     const [primaryKey] = sectionMap[originalIndex];
                     const firstSubsectionHtml = renderBoldOnlyMarkdown(
@@ -485,7 +614,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                       </>
                     );
                   } else if (index === 2 || index === 4 || index === 6) {
-                    // Blurred slides
+                    // Blurred slides - using regular CSS speech bubbles (commented out PNG version)
                     const originalIndex = Math.floor((index - 2) / 2);
                     const [, secondaryKey] = sectionMap[originalIndex];
                     const secondSubsectionHtml = renderBoldOnlyMarkdown(
@@ -493,7 +622,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                     );
                     return (
                       <div
-                        className={`${styles["speech-bubble"]} ${styles["speech-bubble-default"]} ${styles["speech-bubble-primary"]}`}
+                        className={`${styles["speech-bubble"]} ${styles["speech-bubble-default"]} ${styles["speech-bubble-secondary"]} ${styles["no-arrow"]} ${styles["speech-bubble-center"]}`}
                         dangerouslySetInnerHTML={{
                           __html: secondSubsectionHtml,
                         }}
@@ -505,7 +634,8 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
               </>
             )}
           </div>
-        </BackgroundGradient>
+          </div>
+        {/* </BackgroundGradient> */}
       </li>
     </div>
   );
@@ -557,15 +687,20 @@ export function Carousel({ slides }: CarouselProps) {
   }, [slides]);
 
   // Create expanded slides array with blurred versions
+  const titlePageSlide = {
+    analogy: slides[0].analogy, // Use first slide's analogy for title
+    src: "", // No image for title page
+    id: slides[0].id,
+    isTitlePage: true,
+    originalSlides: slides, // Pass the original slides data to the title page
+    background_image: slides[0].background_image, // Pass background image to title page
+  };
+  
+
+  
   const expandedSlides = [
     // Title page (comic book cover style)
-    {
-      analogy: slides[0].analogy, // Use first slide's analogy for title
-      src: "", // No image for title page
-      id: slides[0].id,
-      isTitlePage: true,
-      originalSlides: slides, // Pass the original slides data to the title page
-    },
+    titlePageSlide,
     // Original slides with blurred versions
     ...slides.flatMap((slide) => [
       slide, // Original slide

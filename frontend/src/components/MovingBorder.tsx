@@ -18,6 +18,8 @@ export function MovingBorderButton({
   borderClassName,
   duration,
   className,
+  disabled,
+  onClick,
   ...otherProps
 }: {
   borderRadius?: string;
@@ -27,8 +29,18 @@ export function MovingBorderButton({
   borderClassName?: string;
   duration?: number;
   className?: string;
+  disabled?: boolean;
+  onClick?: (e: any) => void;
   [key: string]: any;
 }) {
+  const handleClick = (e: any) => {
+    if (disabled) {
+      e.preventDefault();
+      return;
+    }
+    onClick?.(e);
+  };
+
   return (
     <Component
       className={cn(
@@ -38,6 +50,8 @@ export function MovingBorderButton({
       style={{
         borderRadius: borderRadius,
       }}
+      disabled={disabled}
+      onClick={handleClick}
       {...otherProps}
     >
       <div

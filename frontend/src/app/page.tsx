@@ -15,6 +15,7 @@ import { FadeInStagger } from "@/components/FadeInStagger";
 import { MovingBorderButton } from "@/components/MovingBorder";
 import { FollowerPointerCard } from "@/components/FollowingPointer";
 import { IconSquare } from "@tabler/icons-react";
+import { cn } from "@/lib/utils";
 
 interface CardPosition {
   id: string;
@@ -45,7 +46,8 @@ export default function Home() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [cardWithOpenMenu, setCardWithOpenMenu] = useState<string | null>(null);
   const [canStopGeneration, setCanStopGeneration] = useState(false);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
   // Initialize card positions when cards change
@@ -178,21 +180,39 @@ export default function Home() {
 
     setIsGenerating(true);
     setCanStopGeneration(true);
-    
+
     // Create a new AbortController for this request
     const controller = new AbortController();
     setAbortController(controller);
-    
+
     try {
-      const response = await api.generateAnalogy({
-        topic: topicCard,
-        audience: audienceCard,
-        user_id: user.id,
-      }, controller.signal);
+      // Get user's timezone
+      const getUserTimezone = () => {
+        try {
+          return Intl.DateTimeFormat().resolvedOptions().timeZone;
+        } catch (error) {
+          console.warn(
+            "Could not get user timezone, falling back to UTC:",
+            error
+          );
+          return "UTC";
+        }
+      };
+
+      const timezoneStr = getUserTimezone();
+
+      const response = await api.generateAnalogy(
+        {
+          topic: topicCard,
+          audience: audienceCard,
+          timezone_str: timezoneStr,
+        },
+        controller.signal
+      );
 
       // Wait a moment for the backend to complete all updates (streak, lifetime count, etc.)
       // This ensures the database is fully updated before we fetch the latest data
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Refresh streak data to get the latest information before redirecting
       // This ensures the results page will have the most up-to-date streak data
@@ -211,16 +231,30 @@ export default function Home() {
         router.push(`/results/temp-${Date.now()}`);
       }
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (error instanceof Error && error.name === "AbortError") {
         console.log("Analogy generation was cancelled by user");
         // Don't show error message for user-initiated cancellation
+      } else if (error instanceof Error && error.message.includes("Authentication required")) {
+        console.error("Authentication error:", error);
+        showNotification({
+          title: "Authentication Required",
+          message: "Please log in to generate analogies.",
+          type: "error",
+          confirmText: "OK",
+        });
+        // Redirect to login page
+        router.push("/login");
       } else {
         console.error("Error generating analogy:", error);
+        
+        // Display the specific error message from the backend
+        const errorMessage = error instanceof Error ? error.message : "Failed to generate analogy. Please try again.";
+        
         showNotification({
           title: "Generation Failed",
-          message: "Failed to generate analogy. Please try again.",
+          message: errorMessage,
           type: "error",
-          confirmText: "OK"
+          confirmText: "OK",
         });
       }
     } finally {
@@ -252,7 +286,7 @@ export default function Home() {
 
   const handleRemoveTopic = (cardText: string) => {
     if (isGenerating) return; // Disable removal during generation
-    
+
     setTopicCard(null);
     // Add the card back to the workspace in an unoccupied position
     if (!cards.includes(cardText)) {
@@ -267,7 +301,7 @@ export default function Home() {
 
   const handleRemoveAudience = (cardText: string) => {
     if (isGenerating) return; // Disable removal during generation
-    
+
     setAudienceCard(null);
     // Add the card back to the workspace in an unoccupied position
     if (!cards.includes(cardText)) {
@@ -500,9 +534,9 @@ export default function Home() {
   };
 
   return (
-    <LampContainer onFinish={() => setLampFinished(true)}>
+    <LampContainer className="top-4" onFinish={() => setLampFinished(true)}>
       <FadeInStagger delayStart={lampFinished}>
-        <div className="pt-32 px-4 md:px-12 max-w-screen-lg mx-auto">
+        <div className="pt-20 sm:pt-24 md:pt-32 px-4 sm:px-6 md:px-12 max-w-screen-lg mx-auto">
           <ExplainWords
             onDragOver={handleDragOver}
             onDropTopic={(e) => handleDrop(e, setTopicCard, topicCard)}
@@ -521,36 +555,43 @@ export default function Home() {
             isGenerating={isGenerating}
           />
 
-          <div className="mt-12 flex flex-col items-center space-y-8">
-            <div className="my-6">
+          <div className="mt-8 sm:mt-12 flex flex-col items-center space-y-6 sm:space-y-8">
+            <div className="my-4 sm:my-6">
               {topicCard && audienceCard ? (
-                <div className="flex items-center justify-center space-x-4">
-                  <MovingBorderButton
-                    onClick={handleSubmit}
-                    disabled={isGenerating}
-                    borderRadius="0.5rem"
-                    duration={3000}
-                    containerClassName="w-auto h-auto"
-                    borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
-                    className="min-w-[240px] px-8 py-3 rounded-lg font-large transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isGenerating ? (
+                <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                  {isGenerating ? (
+                    // Grayed out button with spinner
+                    <button
+                      disabled
+                      className="w-full sm:min-w-[240px] px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-medium text-sm sm:text-base leading-none bg-gray-600 border border-gray-500 text-white shadow-md opacity-50 cursor-not-allowed flex items-center justify-center"
+                    >
                       <div className="flex items-center justify-center space-x-2">
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-white border-t-transparent rounded-lg animate-spin" />
                         <span>Generating...</span>
                       </div>
-                    ) : (
-                      "Generate Analogy"
-                    )}
-                  </MovingBorderButton>
-                  
+                    </button>
+                  ) : (
+                    // Active state: use MovingBorderButton
+                    <MovingBorderButton
+                      onClick={handleSubmit}
+                      borderRadius="0.5rem"
+                      duration={3000}
+                      containerClassName="w-full sm:w-auto h-auto"
+                      borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
+                      className="w-full sm:min-w-[240px] px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center text-sm sm:text-base"
+                    >
+                      Generate Analogy
+                    </MovingBorderButton>
+                  )}
+
+                  {/* Stop button only visible if canStopGeneration */}
                   {canStopGeneration && (
                     <button
                       onClick={handleStopGeneration}
-                      className="w-12 h-12 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
                       title="Stop Generation"
                     >
-                      <IconSquare className="w-5 h-5" />
+                      <IconSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                 </div>
@@ -558,7 +599,7 @@ export default function Home() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="min-w-[240px] px-8 py-3 rounded-lg font-large transition bg-gray-600 cursor-not-allowed border border-white/50 text-white"
+                  className="w-full sm:min-w-[240px] px-6 sm:px-8 py-3 sm:py-4 rounded-lg font-medium transition bg-gray-600 cursor-not-allowed border border-white/50 text-white text-sm sm:text-base"
                   disabled
                 >
                   Generate Analogy
@@ -566,22 +607,22 @@ export default function Home() {
               )}
             </div>
 
-            <div className="w-full max-w-4xl mt-8">
-              <form onSubmit={handleAddCard} className="flex gap-4">
+            <div className="w-full max-w-4xl mt-6 sm:mt-8">
+              <form onSubmit={handleAddCard} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <input
                   type="text"
                   value={newCard}
                   onChange={(e) => setNewCard(e.target.value)}
                   placeholder="Enter a new card..."
-                  className="flex-1 px-4 py-2 rounded-lg bg-black/20 border border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2 rounded-lg bg-black/20 border border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                 />
                 <MovingBorderButton
                   type="submit"
                   borderRadius="0.5rem"
                   duration={3000}
-                  containerClassName="w-auto h-auto"
+                  containerClassName="w-full sm:w-auto h-auto"
                   borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
-                  className="px-8 py-3 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md"
+                  className="w-full sm:px-8 py-2 sm:py-3 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md text-sm sm:text-base"
                 >
                   Add Card
                 </MovingBorderButton>
@@ -589,7 +630,7 @@ export default function Home() {
 
               <div
                 ref={workspaceRef}
-                className="rounded-lg border border-white/10 bg-white/5 my-6 relative overflow-visible"
+                className="rounded-lg border border-white/10 bg-white/5 my-4 sm:my-6 relative overflow-visible"
                 style={{ minHeight: `${workspaceHeight}px` }}
               >
                 <div
@@ -621,7 +662,7 @@ export default function Home() {
                           left: position.x,
                           top: position.y,
                           zIndex: zIndex,
-                          width: "clamp(100px, 15vw, 180px)",
+                          width: "clamp(80px, 12vw, 180px)",
                         }}
                       >
                         <FollowerPointerCard

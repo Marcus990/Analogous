@@ -3,12 +3,10 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { api, GenerateAnalogyResponse } from "@/lib/api";
+import { api, SharedAnalogyResponse } from "@/lib/api";
 import { MovingBorderButton } from "@/components/MovingBorder";
 import { BackgroundGradient } from "@/components/BackgroundGradient";
 import { Carousel } from "@/components/Carousel";
-import StreakModal from "@/components/StreakModal";
-import ShareModal from "@/components/ShareModal";
 import {
   BentoGridItemResultsPage,
   BentoGridResultsPage,
@@ -20,6 +18,8 @@ import {
   IconShare,
   IconX,
   IconSquare,
+  IconRefresh,
+  IconUser,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -27,29 +27,25 @@ import { useStreak } from "@/lib/streakContext";
 import { useNotification } from "@/lib/notificationContext";
 import "../page.css";
 
-export default function ResultsPage() {
+export default function SharedAnalogyPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { refreshStreakData } = useStreak();
   const { showNotification } = useNotification();
-  const [analogy, setAnalogy] = useState<GenerateAnalogyResponse | null>(null);
+  const [analogy, setAnalogy] = useState<SharedAnalogyResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCarousel, setShowCarousel] = useState(false);
   const [showText, setShowText] = useState(false);
   const [showLearnMore, setShowLearnMore] = useState(false);
-  const [showShare, setShowShare] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
-  const [showStreakModal, setShowStreakModal] = useState(false);
-  const [hasShownStreakModal, setHasShownStreakModal] = useState(false);
   const [regenerateAbortController, setRegenerateAbortController] =
     useState<AbortController | null>(null);
   const [activeLearnMoreTab, setActiveLearnMoreTab] = useState<
     "text" | "video"
   >("text");
-  const [isPublic, setIsPublic] = useState(false);
 
   // Use ref to track if analogy has been fetched to prevent multiple calls
   const hasFetchedAnalogy = useRef(false);
@@ -65,23 +61,23 @@ export default function ResultsPage() {
     return `${backendUrl}${relativeUrl}`;
   }, []);
 
-  const handleShowOverlay = useCallback((type: "carousel" | "text" | "learnMore" | "share") => {
-    console.log("handleShowOverlay called with type:", type);
-    if (type === "carousel") {
-      setShowCarousel(true);
-    } else if (type === "text") {
-      setShowText(true);
-    } else if (type === "learnMore") {
-      console.log("Setting showLearnMore to true");
-      setShowLearnMore(true);
-      setActiveLearnMoreTab("text"); // Reset to text tab when opening
-    } else if (type === "share") {
-      console.log("Setting showShare to true");
-      setShowShare(true);
-    }
-    // Reset animation state after animation completes
-    setTimeout(() => {}, 800);
-  }, []);
+  const handleShowOverlay = useCallback(
+    (type: "carousel" | "text" | "learnMore") => {
+      console.log("handleShowOverlay called with type:", type);
+      if (type === "carousel") {
+        setShowCarousel(true);
+      } else if (type === "text") {
+        setShowText(true);
+      } else if (type === "learnMore") {
+        console.log("Setting showLearnMore to true");
+        setShowLearnMore(true);
+        setActiveLearnMoreTab("text"); // Reset to text tab when opening
+      }
+      // Reset animation state after animation completes
+      setTimeout(() => {}, 800);
+    },
+    []
+  );
 
   const handleHideOverlay = useCallback(() => {
     setShowCarousel(false);
@@ -252,24 +248,10 @@ export default function ResultsPage() {
           variants={variants}
           className="flex flex-row rounded-2xl border border-neutral-100 dark:border-white/[0.2] p-2 items-start space-x-2 bg-white dark:bg-black"
         >
-          <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-purple-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-              />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <div className="w-3/4 h-3 bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="w-8 h-8 bg-gray-300 rounded-lg"></div>
+          <div className="flex flex-col space-y-1 flex-1">
+            <div className="w-3/4 h-3 bg-gray-300 rounded"></div>
+            <div className="w-1/2 h-2 bg-gray-200 rounded"></div>
           </div>
         </motion.div>
 
@@ -277,31 +259,17 @@ export default function ResultsPage() {
           variants={variantsSecond}
           className="flex flex-row rounded-2xl border border-neutral-100 dark:border-white/[0.2] p-2 items-start space-x-2 bg-white dark:bg-black"
         >
-          <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
-            <svg
-              className="w-5 h-5 text-purple-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <div className="w-2/3 h-3 bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="w-8 h-8 bg-gray-300 rounded-lg"></div>
+          <div className="flex flex-col space-y-1 flex-1">
+            <div className="w-2/3 h-3 bg-gray-300 rounded"></div>
+            <div className="w-1/3 h-2 bg-gray-200 rounded"></div>
           </div>
         </motion.div>
       </motion.div>
     );
   };
 
-  const ShareSkeleton = () => {
+  const RegenerateSkeleton = () => {
     const variants = {
       initial: {
         scale: 1,
@@ -309,7 +277,7 @@ export default function ResultsPage() {
       },
       hover: {
         scale: 1.1,
-        rotate: 15,
+        rotate: 180,
         transition: {
           duration: 0.6,
           ease: "easeInOut",
@@ -345,19 +313,19 @@ export default function ResultsPage() {
         whileHover="hover"
         className="flex flex-1 w-full h-full min-h-[6rem] dark:bg-dot-white/[0.2] bg-dot-black/[0.2] flex-row items-center space-x-6 p-4"
       >
-        {/* Large Share Icon */}
+        {/* Large Regenerate Icon */}
         <motion.div
           variants={variants}
           className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg"
         >
-          <IconShare className="w-10 h-10 text-white" />
+          <IconRefresh className="w-10 h-10 text-white" />
         </motion.div>
 
         {/* Animated Text Bars */}
         <div className="flex flex-col space-y-3 flex-1">
           {arr.map((_, i) => (
             <motion.div
-              key={"share-text-" + i}
+              key={"regenerate-text-" + i}
               variants={textVariants}
               style={{
                 maxWidth: widths[i],
@@ -369,113 +337,43 @@ export default function ResultsPage() {
 
         {/* Status Indicator */}
         <div className="flex flex-col items-center space-y-2 flex-shrink-0">
-          <div className={`w-4 h-4 rounded-full ${isPublic ? 'bg-green-400' : 'bg-gray-400'} animate-pulse`} />
-          <div className={`w-2 h-2 rounded-full ${isPublic ? 'bg-green-300' : 'bg-gray-500'} animate-pulse`} style={{ animationDelay: "0.2s" }} />
-          <div className={`w-1 h-1 rounded-full ${isPublic ? 'bg-green-200' : 'bg-gray-600'} animate-pulse`} style={{ animationDelay: "0.4s" }} />
+          <div className="w-4 h-4 bg-purple-400 rounded-full animate-pulse" />
+          <div className="w-2 h-2 bg-purple-300 rounded-full animate-pulse" style={{ animationDelay: "0.2s" }} />
+          <div className="w-1 h-1 bg-purple-200 rounded-full animate-pulse" style={{ animationDelay: "0.4s" }} />
         </div>
       </motion.div>
     );
   };
 
   useEffect(() => {
-    const fetchAnalogy = async () => {
+    const fetchSharedAnalogy = async () => {
       // Prevent multiple fetches for the same analogy
       if (hasFetchedAnalogy.current) {
-        return;
-      }
-
-      // Wait for authentication to load before proceeding
-      if (authLoading) {
-        console.log("Auth is still loading, waiting...");
         return;
       }
 
       try {
         const id = params.id as string;
         hasFetchedAnalogy.current = true;
-        
-        const data = await api.getAnalogy(id);
+
+        const data = await api.getSharedAnalogy(id);
         setAnalogy(data);
-        setIsPublic(data.is_public);
 
         // Debug: Log the analogy data and image URLs
-        console.log("Fetched analogy data:", data);
+        console.log("Fetched shared analogy data:", data);
         console.log("Analogy images:", data.analogy_images);
-
-        // Gatekeeping: Check if the current user owns this analogy
-        if (!user) {
-          // User is not authenticated
-          console.log("User is not authenticated");
-          if (data.is_public) {
-            // If the analogy is public, redirect to the shared page
-            console.log("Analogy is public, redirecting to shared page");
-            router.push(`/shared/${id}`);
-            return;
-          } else {
-            // If the analogy is private and user is not authenticated, show error
-            setError("You need to be logged in to view this analogy");
-            setLoading(false);
-            return;
-          }
-        } else if (data.user_id !== user.id) {
-          // User is authenticated but doesn't own this analogy
-          console.log("User does not own this analogy. Checking if they can access it.");
-          console.log("Current user ID:", user.id);
-          console.log("Analogy owner ID:", data.user_id);
-          
-          // If the analogy is public, redirect to the shared page
-          if (data.is_public) {
-            console.log("Analogy is public, redirecting to shared page");
-            router.push(`/shared/${id}`);
-            return;
-          } else {
-            // If the analogy is private and user doesn't own it, show error
-            setError("You don't have permission to view this analogy");
-            setLoading(false);
-            return;
-          }
-        } else {
-          // User owns this analogy - they should always be able to access the results page
-          console.log("User owns this analogy - allowing access to results page");
-        }
-
-        // Check if this analogy should show the streak popup
-        console.log("Checking streak popup conditions:");
-        console.log("  analogy ID:", data.id);
-        console.log("  streak_popup_shown from DB:", data.streak_popup_shown);
-        console.log("  user exists:", !!user);
-        console.log("  hasShownStreakModal:", hasShownStreakModal);
-        
-        // Only show streak popup if:
-        // 1. User exists
-        // 2. Popup hasn't been shown before for this analogy (streak_popup_shown is false)
-        // 3. Haven't shown modal in this session yet
-        const shouldShowPopup = user && data.streak_popup_shown === false && !hasShownStreakModal;
-        console.log("  should show popup:", shouldShowPopup);
-        
-        if (shouldShowPopup) {
-          console.log("Showing streak popup for analogy:", data.id);
-          // Refresh streak data before showing the modal to ensure we have the latest data
-          await refreshStreakData();
-          // Show the streak modal for analogies that should show the popup
-          setShowStreakModal(true);
-          setHasShownStreakModal(true);
-        } else {
-          console.log("Not showing streak popup. Reasons:");
-          if (!user) console.log("  - no user");
-          if (data.streak_popup_shown !== false) console.log("  - popup already shown before (streak_popup_shown is true)");
-          if (hasShownStreakModal) console.log("  - already shown modal this session");
-        }
       } catch (err) {
-        console.error("Error fetching analogy:", err);
+        console.error("Error fetching shared analogy:", err);
         if (err instanceof Error) {
-          if (err.message.includes("404") || err.message.includes("not found")) {
-            setError("Analogy not found");
+          if (err.message.includes("not public")) {
+            setError("This analogy is not public and cannot be shared.");
+          } else if (err.message.includes("not found")) {
+            setError("Analogy not found.");
           } else {
-            setError("Failed to load analogy");
+            setError("Failed to load shared analogy");
           }
         } else {
-          setError("Failed to load analogy");
+          setError("Failed to load shared analogy");
         }
       } finally {
         setLoading(false);
@@ -483,73 +381,45 @@ export default function ResultsPage() {
     };
 
     if (params.id && !hasFetchedAnalogy.current) {
-      fetchAnalogy();
+      fetchSharedAnalogy();
     }
-  }, [params.id, user, hasShownStreakModal, router, authLoading]); // Added authLoading to dependencies
+  }, [params.id]);
 
   // Reset the fetch flag when params.id changes
   useEffect(() => {
     console.log("Analogy ID changed to:", params.id);
     hasFetchedAnalogy.current = false;
-    // Reset the streak modal shown flag when analogy ID changes
-    setHasShownStreakModal(false);
-    console.log("Reset hasShownStreakModal to false for new analogy");
   }, [params.id]);
 
-  // Handle modal close and mark popup as shown
-  const handleStreakModalClose = useCallback(async () => {
-    console.log("Streak modal closed for analogy:", analogy?.id);
-    setShowStreakModal(false);
-
-    // Mark the streak popup as shown in the database
-    if (analogy && user) {
-      try {
-        console.log("Marking streak popup as shown in database for analogy:", analogy.id);
-        await api.markStreakPopupShown(analogy.id, user.id);
-        console.log("Successfully marked streak popup as shown");
-      } catch (error) {
-        console.error("Error marking streak popup as shown:", error);
-      }
-    } else {
-      console.log("Cannot mark popup as shown - missing analogy or user");
-    }
-  }, [analogy, user]);
-
-  const showOverlay = showText || showCarousel || showLearnMore;
-
-  useEffect(() => {
-    if (showOverlay) {
-      document.body.style.overflow = "hidden";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [showOverlay]);
-
-  const handleGenerateNew = useCallback(() => {
-    router.push("/");
-  }, [router]);
-
   const handleRegenerateAnalogy = useCallback(async () => {
-    if (!analogy) return;
+    if (!analogy || !user) {
+      showNotification({
+        title: "Authentication Required",
+        message: "Please log in to regenerate analogies.",
+        type: "error",
+        confirmText: "OK",
+      });
+      router.push("/login");
+      return;
+    }
 
     try {
       setIsRegenerating(true);
-
-      // Create a new AbortController for this request
       const controller = new AbortController();
       setRegenerateAbortController(controller);
 
-      // Get user's timezone
       const getUserTimezone = () => {
         try {
           return Intl.DateTimeFormat().resolvedOptions().timeZone;
         } catch (error) {
-          console.warn("Could not get user timezone, falling back to UTC:", error);
+          console.warn(
+            "Could not get user timezone, falling back to UTC:",
+            error
+          );
           return "UTC";
         }
       };
-      
+
       const timezoneStr = getUserTimezone();
 
       const newAnalogy = await api.regenerateAnalogy(
@@ -558,12 +428,9 @@ export default function ResultsPage() {
         controller.signal
       );
 
-      // Wait a moment for the backend to complete all updates (streak, lifetime count, etc.)
-      // This ensures the database is fully updated before we fetch the latest data
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      console.log("Successfully regenerated analogy:", newAnalogy);
 
-      // Refresh streak data to get the latest information before redirecting
-      // This ensures the new results page will have the most up-to-date streak data
+      // Refresh streak data
       try {
         await refreshStreakData();
       } catch (error) {
@@ -577,7 +444,10 @@ export default function ResultsPage() {
       if (error instanceof Error && error.name === "AbortError") {
         console.log("Analogy regeneration was cancelled by user");
         // Don't show error message for user-initiated cancellation
-      } else if (error instanceof Error && error.message.includes("Authentication required")) {
+      } else if (
+        error instanceof Error &&
+        error.message.includes("Authentication required")
+      ) {
         console.error("Authentication error:", error);
         showNotification({
           title: "Authentication Required",
@@ -587,7 +457,10 @@ export default function ResultsPage() {
         });
         // Redirect to login page
         router.push("/login");
-      } else if (error instanceof Error && error.message.includes("Access denied")) {
+      } else if (
+        error instanceof Error &&
+        error.message.includes("Access denied")
+      ) {
         console.error("Authorization error:", error);
         showNotification({
           title: "Access Denied",
@@ -618,7 +491,7 @@ export default function ResultsPage() {
       setIsRegenerating(false);
       setRegenerateAbortController(null);
     }
-  }, [analogy, refreshStreakData, router, showNotification]);
+  }, [analogy, refreshStreakData, router, showNotification, user]);
 
   const handleStopRegeneration = useCallback(() => {
     if (regenerateAbortController) {
@@ -631,26 +504,40 @@ export default function ResultsPage() {
     // The user can now regenerate again
   }, [regenerateAbortController]);
 
+  const showOverlay = showText || showCarousel || showLearnMore;
 
+  useEffect(() => {
+    if (showOverlay) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [showOverlay]);
 
-  const ExitButton = useCallback(({ onClick }: { onClick: () => void }) => (
-    <button
-      onClick={onClick}
-      className="absolute w-8 h-8 top-4 right-4 text-white hover:text-gray-300 hover:scale-110 transition-all duration-200 z-[999] bg-black/20 hover:bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm"
-      title="Exit"
-    >
-      <IconX className="w-5 h-5" />
-    </button>
-  ), []);
+  const handleGenerateNew = useCallback(() => {
+    router.push("/");
+  }, [router]);
 
-  if (loading || authLoading) {
+  const ExitButton = useCallback(
+    ({ onClick }: { onClick: () => void }) => (
+      <button
+        onClick={onClick}
+        className="absolute w-8 h-8 top-4 right-4 text-white hover:text-gray-300 hover:scale-110 transition-all duration-200 z-[999] bg-black/20 hover:bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm"
+        title="Exit"
+      >
+        <IconX className="w-5 h-5" />
+      </button>
+    ),
+    []
+  );
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-400">
-            {authLoading ? "Loading authentication..." : "Loading your analogy..."}
-          </p>
+          <p className="mt-4 text-gray-400">Loading shared analogy...</p>
         </div>
       </div>
     );
@@ -660,7 +547,9 @@ export default function ResultsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-400 mb-4">Access Denied</h1>
+          <h1 className="text-2xl font-bold text-red-400 mb-4">
+            Access Denied
+          </h1>
           <p className="text-gray-400 mb-8">{error || "Analogy not found"}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <MovingBorderButton
@@ -699,20 +588,6 @@ export default function ResultsPage() {
 
   return (
     <div className="min-h-screen bg-black text-white flex justify-center items-center px-4">
-      <StreakModal
-        isOpen={showStreakModal}
-        onClose={handleStreakModalClose}
-        isNewStreak={true}
-      />
-
-      <ShareModal
-        isOpen={showShare}
-        onClose={() => setShowShare(false)}
-        analogy={analogy}
-        isPublic={isPublic}
-        onPublicStatusChange={setIsPublic}
-      />
-
       <div className="w-full max-w-6xl mx-auto px-4 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -720,6 +595,10 @@ export default function ResultsPage() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
+          <p className="text-purple-400 text-md mt-2 mb-6 flex items-center justify-center gap-2">
+            <IconUser className="w-5 h-5" />
+            Created by @{analogy.creator_username}
+          </p>
           <div className="neonText">
             <span
               className={
@@ -736,7 +615,7 @@ export default function ResultsPage() {
 
         {/* BentoGrid to access views */}
         <BentoGridResultsPage className="max-w-6xl mx-auto md:auto-rows-[20rem]">
-          {/* Cinematic Storybook - takes up 2 columns */}
+          {/* Comic Book - takes up 2 columns */}
           <div
             onClick={() => handleShowOverlay("carousel")}
             className="cursor-pointer md:col-span-2"
@@ -779,19 +658,61 @@ export default function ResultsPage() {
             />
           </div>
 
-          {/* Share - takes 2 columns */}
+          {/* Regenerate - takes 2 columns */}
           <div
-            onClick={() => handleShowOverlay("share")}
+            onClick={handleRegenerateAnalogy}
             className="cursor-pointer md:col-span-2"
           >
             <BentoGridItemResultsPage
-              title="Share"
-              description="Share this analogy with your friends and followers."
-              header={<ShareSkeleton />}
-              icon={<IconShare className="h-4 w-4 text-white" />}
+              title="Regenerate"
+              description="Create your own version of this analogy."
+              header={<RegenerateSkeleton />}
+              icon={<IconRefresh className="h-4 w-4 text-white" />}
             />
           </div>
         </BentoGridResultsPage>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="mt-12 flex flex-col md:flex-row gap-4 justify-center items-center"
+        >
+          {/** Button Wrapper */}
+          <div className="flex flex-wrap items-center justify-center gap-4 my-6">
+            {/* Generate New Analogy */}
+            <button
+              onClick={handleGenerateNew}
+              disabled={isRegenerating}
+              className="min-w-[240px] px-8 py-4 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              Generate New Analogy
+            </button>
+
+            {/* Stop Regeneration */}
+            {isRegenerating && (
+              <button
+                onClick={handleStopRegeneration}
+                className="w-12 h-12 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
+                title="Stop Regeneration"
+              >
+                <IconSquare className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </motion.div>
+
+        {analogy.id && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="mt-8 text-center"
+          >
+            <p className="text-sm text-gray-500">Analogy ID: {analogy.id}</p>
+          </motion.div>
+        )}
+
         {showOverlay && (
           <motion.div
             className="fixed inset-0 z-50 flex justify-center items-center"
@@ -801,7 +722,7 @@ export default function ResultsPage() {
             transition={{ duration: 0.3 }}
             onClick={handleHideOverlay}
           >
-            {/* Background Blur & Disab le Interaction */}
+            {/* Background Blur & Disable Interaction */}
             <motion.div
               className="absolute inset-0 bg-black pointer-events-none"
               initial={{
@@ -950,14 +871,16 @@ export default function ResultsPage() {
                       <Carousel
                         slides={analogy.analogy_images.map((src, i) => {
                           const fullSrc = getFullImageUrl(src);
-                          const backgroundImageUrl = analogy.background_image ? getFullImageUrl(analogy.background_image) : undefined;
-                          
+                          const backgroundImageUrl = analogy.background_image
+                            ? getFullImageUrl(analogy.background_image)
+                            : undefined;
+
                           // Debug: Log the background image URL
                           console.log("Background image URL:", {
                             original: analogy.background_image,
-                            fullUrl: backgroundImageUrl
+                            fullUrl: backgroundImageUrl,
                           });
-                          
+
                           const slide = {
                             src: fullSrc,
                             id: `${analogy.id}`,
@@ -1120,6 +1043,11 @@ export default function ResultsPage() {
                                           {link.publisher && (
                                             <span className="bg-gray-700/50 px-2 py-1 rounded">
                                               {link.publisher}
+                                            </span>
+                                          )}
+                                          {link.creator && (
+                                            <span className="bg-gray-700/50 px-2 py-1 rounded">
+                                              {link.creator}
                                             </span>
                                           )}
                                           {link.published && (
@@ -1311,66 +1239,7 @@ export default function ResultsPage() {
                   </BackgroundGradient>
                 </>
               )}
-
-
             </motion.div>
-          </motion.div>
-        )}
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-12 flex flex-col md:flex-row gap-4 justify-center items-center"
-        >
-          {/** Button Wrapper */}
-          <div className="flex flex-wrap items-center justify-center gap-4 my-6">
-            {/* Generate New Analogy */}
-            <button
-              onClick={handleGenerateNew}
-              disabled={isRegenerating}
-              className="min-w-[240px] px-8 py-4 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              Generate New Analogy
-            </button>
-
-            {/* Re-Generate Analogy */}
-            <button
-              onClick={handleRegenerateAnalogy}
-              disabled={isRegenerating}
-              className="min-w-[240px] px-8 py-4 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {isRegenerating ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Regenerating...</span>
-                </div>
-              ) : (
-                <span className="leading-none">Re-Generate Analogy</span>
-              )}
-            </button>
-
-            {/* Stop Regeneration */}
-            {isRegenerating && (
-              <button
-                onClick={handleStopRegeneration}
-                className="w-12 h-12 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
-                title="Stop Regeneration"
-              >
-                <IconSquare className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-        </motion.div>
-
-        {analogy.id && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="mt-8 text-center"
-          >
-            <p className="text-sm text-gray-500">Analogy ID: {analogy.id}</p>
           </motion.div>
         )}
       </div>

@@ -15,6 +15,7 @@ import ConfirmationModal from "@/components/ConfirmationModal";
 import StreakModal from "@/components/StreakModal";
 import { useStreak } from "@/lib/streakContext";
 import { useNotification } from "@/lib/notificationContext";
+import CachedImage from "@/components/CachedImage";
 import {
   HiOutlineUserCircle,
   HiOutlineLightBulb,
@@ -23,6 +24,7 @@ import {
   HiOutlineCreditCard,
   HiOutlineFire,
   HiOutlineTrash,
+  HiOutlineBookOpen,
 } from "react-icons/hi";
 import { motion } from "framer-motion";
 
@@ -78,8 +80,8 @@ const TypewriterHeading = () => {
     "5-year-old",
     "grandparent",
     "teenager",
-    "business executive",
-    "high school student",
+    "CEO",
+    "composer",
     "retiree",
     "middle schooler",
     "singer",
@@ -356,6 +358,7 @@ interface AnalogyData {
   };
   image_urls: string[];
   created_at: string;
+  background_image: string;
 }
 
 interface UserAnalogiesResponse {
@@ -383,11 +386,12 @@ export default function DashboardPage() {
 
   // Helper function to convert relative image URLs to absolute backend URLs
   const getFullImageUrl = (relativeUrl: string) => {
-    if (relativeUrl.startsWith('http')) {
+    if (relativeUrl.startsWith("http")) {
       return relativeUrl; // Already absolute
     }
     // Convert relative URL to absolute backend URL
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     return `${backendUrl}${relativeUrl}`;
   };
 
@@ -446,16 +450,16 @@ export default function DashboardPage() {
 
     try {
       setLoadingRecentAnalogies(true);
-      const response: UserAnalogiesResponse = await api.getUserAnalogies(
-        user.id
+      const response: UserAnalogiesResponse = await api.getUserRecentAnalogies(
+        user.id,
+        3
       );
 
       // Store all analogies for potential replacement
       setAllUserAnalogies(response.analogies);
 
-      // Get the 3 most recent analogies
-      const recent = response.analogies.slice(0, 3);
-      setRecentAnalogies(recent);
+      // Get the 3 most recent analogies (they're already the most recent from the API)
+      setRecentAnalogies(response.analogies);
     } catch (err) {
       console.error("Error refreshing analogies:", err);
     } finally {
@@ -463,45 +467,46 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  useEffect(() => {
-    const fetchRecentAnalogies = async () => {
-      if (user) {
-        try {
-          setLoadingRecentAnalogies(true);
-          console.log("Fetching recent analogies for user:", user.id);
-          const response: UserAnalogiesResponse = await api.getUserAnalogies(
-            user.id
-          );
-          console.log("API response:", response);
+  // Memoize the fetch function to prevent infinite re-renders
+  const fetchRecentAnalogies = useCallback(async () => {
+    if (!user) return;
 
-          // Store all analogies for potential replacement
-          setAllUserAnalogies(response.analogies);
+    try {
+      setLoadingRecentAnalogies(true);
+      console.log("Fetching recent analogies for user:", user.id);
+      const response: UserAnalogiesResponse = await api.getUserRecentAnalogies(
+        user.id,
+        3
+      );
+      console.log("API response:", response);
 
-          // Get the 3 most recent analogies
-          const recent = response.analogies.slice(0, 3);
-          console.log("Recent analogies:", recent);
-          setRecentAnalogies(recent);
-        } catch (err) {
-          console.error("Error fetching recent analogies:", err);
-        } finally {
-          setLoadingRecentAnalogies(false);
-        }
-      }
-    };
+      // Store all analogies for potential replacement
+      setAllUserAnalogies(response.analogies);
 
-    fetchRecentAnalogies();
+      // Get the 3 most recent analogies (they're already the most recent from the API)
+      console.log("Recent analogies:", response.analogies);
+      setRecentAnalogies(response.analogies);
+    } catch (err) {
+      console.error("Error fetching recent analogies:", err);
+    } finally {
+      setLoadingRecentAnalogies(false);
+    }
   }, [user]);
 
-  // Refresh analogies when user returns to the tab
+  // Single useEffect to handle initial fetch and event listeners
   useEffect(() => {
+    if (!user) return;
+
+    // Initial fetch
+    fetchRecentAnalogies();
+
+    // Event listeners for refreshing data
     const handleFocus = () => {
-      if (user) {
-        refreshAnalogies();
-      }
+      refreshAnalogies();
     };
 
     const handleVisibilityChange = () => {
-      if (!document.hidden && user) {
+      if (!document.hidden) {
         refreshAnalogies();
       }
     };
@@ -513,7 +518,7 @@ export default function DashboardPage() {
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [user, refreshAnalogies]);
+  }, [user, fetchRecentAnalogies, refreshAnalogies]);
 
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
@@ -551,35 +556,8 @@ export default function DashboardPage() {
       setDeletingAnalogy(analogyToDelete);
       await api.deleteAnalogy(analogyToDelete);
 
-      // Update both states atomically
-      setAllUserAnalogies((prev) => {
-        const updatedAllAnalogies = prev.filter(
-          (analogy) => analogy.id !== analogyToDelete
-        );
-
-        // Update recent analogies based on the updated all analogies
-        setRecentAnalogies((currentRecent) => {
-          const filtered = currentRecent.filter(
-            (analogy) => analogy.id !== analogyToDelete
-          );
-
-          // If we have fewer than 3 analogies and there are more available, add the next one
-          if (
-            filtered.length < 3 &&
-            updatedAllAnalogies.length > filtered.length
-          ) {
-            const nextAnalogy = updatedAllAnalogies[filtered.length]; // Get the next analogy after the current filtered ones
-
-            if (nextAnalogy) {
-              return [...filtered, nextAnalogy];
-            }
-          }
-
-          return filtered;
-        });
-
-        return updatedAllAnalogies;
-      });
+      // Refresh recent analogies from the database to get the next most recent one
+      await refreshAnalogies();
 
       console.log("Analogy deleted successfully");
     } catch (err) {
@@ -588,7 +566,7 @@ export default function DashboardPage() {
         title: "Delete Failed",
         message: "Failed to delete analogy. Please try again.",
         type: "error",
-        confirmText: "OK"
+        confirmText: "OK",
       });
     } finally {
       setDeletingAnalogy(null);
@@ -664,15 +642,15 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <LampContainer>
+      <LampContainer className="top-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="min-h-screen w-full pt-32 px-6 pb-12 sm:px-10 lg:px-24"
+          className="min-h-screen w-full pt-20 sm:pt-24 md:pt-32 px-4 sm:px-6 md:px-10 lg:px-24 pb-8 sm:pb-12"
         >
           <motion.div
-            className="space-y-12"
+            className="space-y-8 sm:space-y-12"
             initial="hidden"
             animate="visible"
             variants={{
@@ -690,15 +668,15 @@ export default function DashboardPage() {
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0 },
               }}
-              className="space-y-6"
+              className="space-y-4 sm:space-y-6"
             >
               <div className="relative w-fit after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-[2px] after:bg-white">
-                <h2 className="font-bold text-white mb-1 font-[PlantinMTProSemiBold] text-[3rem] md:text-[4rem] leading-none">
+                <h2 className="font-bold text-white mb-1 font-[PlantinMTProSemiBold] text-3xl sm:text-4xl md:text-5xl lg:text-[4rem] leading-none">
                   Welcome{firstName ? `, ${firstName}` : ""}
                 </h2>
               </div>
-              <p className="text-xl text-gray-400">
-                Ready to explore complex topics through powerful analogies?
+              <p className="text-md sm:text-lg md:text-xl text-gray-400">
+                Ready to learn something new every day through analogies?
               </p>
             </motion.div>
 
@@ -718,19 +696,20 @@ export default function DashboardPage() {
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0 },
               }}
+              className="w-full"
             >
-              <BentoGridDashboard className="max-w-6xl mx-auto">
+              <BentoGridDashboard className="w-full">
                 {/* Generate New Analogy */}
                 <BentoGridItem
-                  className="md:col-span-3 cursor-pointer group"
+                  className="col-span-1 sm:col-span-2 md:col-span-3 cursor-pointer group"
                   title="Generate New Analogy"
                   description="Create a fresh analogy by selecting your topic and audience"
                   icon={
-                    <HiOutlineLightBulb className="text-4xl text-white transition-colors" />
+                    <HiOutlineLightBulb className="text-2xl sm:text-3xl md:text-4xl text-white transition-colors" />
                   }
                   header={
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-white font-medium">
+                      <div className="text-xs sm:text-sm text-white font-medium">
                         Create
                       </div>
                       <div className="text-xs text-white">AI-Powered</div>
@@ -739,7 +718,7 @@ export default function DashboardPage() {
                   onClick={() => router.push("/")}
                   skeleton={
                     <motion.div
-                      className="absolute -top-10 -right-10 w-32 h-32 opacity-20"
+                      className="absolute -top-8 -right-8 sm:-top-10 sm:-right-10 w-20 h-20 sm:w-32 sm:h-32 opacity-20"
                       whileHover={{
                         rotate: 360,
                       }}
@@ -767,15 +746,15 @@ export default function DashboardPage() {
 
                 {/* User Settings */}
                 <BentoGridItem
-                  className="md:col-span-2 cursor-pointer group"
+                  className="col-span-1 sm:col-span-1 md:col-span-2 cursor-pointer group"
                   title="User Settings"
                   description="Customize your profile and preferences"
                   icon={
-                    <HiOutlineCog className="text-4xl text-white transition-colors" />
+                    <HiOutlineCog className="text-2xl sm:text-3xl md:text-4xl text-white transition-colors" />
                   }
                   header={
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-white font-medium">
+                      <div className="text-xs sm:text-sm text-white font-medium">
                         Configure
                       </div>
                       <div className="text-xs text-white">Personal</div>
@@ -784,7 +763,7 @@ export default function DashboardPage() {
                   onClick={() => router.push("/settings")}
                   skeleton={
                     <motion.div
-                      className="absolute -top-12 -right-12 w-32 h-32 opacity-20"
+                      className="absolute -top-8 -right-8 sm:-top-12 sm:-right-12 w-20 h-20 sm:w-32 sm:h-32 opacity-20"
                       whileHover={{
                         rotate: 360,
                       }}
@@ -807,29 +786,26 @@ export default function DashboardPage() {
                   }
                 />
 
-                {/* View Past Analogies */}
+                {/* Personal Library */}
                 <BentoGridItem
-                  className="md:col-span-2 cursor-pointer group"
-                  title="View Past Analogies"
-                  description="Browse and manage your previously created analogies"
+                  className="col-span-1 sm:col-span-1 md:col-span-2 cursor-pointer group"
+                  title="Personal Library"
+                  description="Browse and manage your collection of analogies"
                   icon={
-                    <HiOutlineClock className="text-4xl text-white transition-colors" />
+                    <HiOutlineBookOpen className="text-2xl sm:text-3xl md:text-4xl text-white transition-colors" />
                   }
                   header={
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-white font-medium">
-                        History
+                      <div className="text-xs sm:text-sm text-white font-medium">
+                        Library
                       </div>
-                      <div className="text-xs text-white">Your Collection</div>
+                      <div className="text-xs text-white">Your Analogies</div>
                     </div>
                   }
                   onClick={() => router.push("/past-analogies")}
                   skeleton={
                     <motion.div
-                      className="absolute -top-12 -right-12 w-32 h-32 opacity-20"
-                      whileHover={{
-                        rotate: 360,
-                      }}
+                      className="absolute -top-8 -right-8 sm:-top-12 sm:-right-12 w-20 h-20 sm:w-32 sm:h-32 opacity-20"
                       transition={{
                         duration: 3,
                         ease: "linear",
@@ -839,12 +815,13 @@ export default function DashboardPage() {
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="white"
-                        strokeWidth="1"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                         className="w-full h-full"
-                        style={{ transform: "rotate(160deg)" }}
                       >
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12,6 12,12 16,14" />
+                        <path d="M3 4.5V19.5C3 19.5 5 18 8 18C11 18 13 19.5 13 19.5V4.5C13 4.5 11 3 8 3C5 3 3 4.5 3 4.5Z" />
+                        <path d="M13 4.5V19.5C13 19.5 15 18 18 18C21 18 21 19.5 21 19.5V4.5C21 4.5 21 3 18 3C15 3 13 4.5 13 4.5Z" />
                       </svg>
                     </motion.div>
                   }
@@ -852,24 +829,24 @@ export default function DashboardPage() {
 
                 {/* Manage Pricing Plan */}
                 <BentoGridItem
-                  className="md:col-span-2 cursor-pointer group"
+                  className="col-span-1 sm:col-span-1 md:col-span-2 cursor-pointer group"
                   title="Manage Pricing Plan"
-                  description="Generate unlimited analogies"
+                  description="Generate more analogies"
                   icon={
-                    <HiOutlineCreditCard className="text-4xl text-white transition-colors" />
+                    <HiOutlineCreditCard className="text-2xl sm:text-3xl md:text-4xl text-white transition-colors" />
                   }
                   header={
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-white font-medium">
+                      <div className="text-xs sm:text-sm text-white font-medium">
                         Upgrade
                       </div>
                       <div className="text-xs text-white">Plan</div>
                     </div>
                   }
-                  onClick={() => router.push("/pricing")}
+                  onClick={() => router.push("/dashboard/pricing")}
                   skeleton={
                     <motion.div
-                      className="absolute -top-10 -right-10 w-32 h-32 opacity-20"
+                      className="absolute -top-8 -right-8 sm:-top-10 sm:-right-10 w-20 h-20 sm:w-32 sm:h-32 opacity-20"
                       whileHover={{
                         rotate: 360,
                       }}
@@ -926,15 +903,15 @@ export default function DashboardPage() {
 
                 {/* Daily Streak */}
                 <BentoGridItem
-                  className="cursor-pointer group"
+                  className="col-span-1 cursor-pointer group"
                   title="Daily Streak"
                   description="Keep your streak alive"
                   icon={
-                    <HiOutlineFire className="text-4xl text-white transition-colors" />
+                    <HiOutlineFire className="text-2xl sm:text-3xl md:text-4xl text-white transition-colors" />
                   }
                   header={
                     <div className="flex items-center justify-between">
-                      <div className="text-sm text-white font-medium">
+                      <div className="text-xs sm:text-sm text-white font-medium">
                         Daily
                       </div>
                       <div className="text-xs text-white">
@@ -951,7 +928,7 @@ export default function DashboardPage() {
                   onClick={handleStreakClick}
                   skeleton={
                     <motion.div
-                      className="absolute -top-12 -right-12 w-32 h-32 opacity-20"
+                      className="absolute -top-8 -right-8 sm:-top-12 sm:-right-12 w-20 h-20 sm:w-32 sm:h-32 opacity-20"
                       whileHover={{
                         rotate: 360,
                       }}
@@ -975,34 +952,34 @@ export default function DashboardPage() {
               </BentoGridDashboard>
             </motion.div>
 
-            {/* Recent Activity Section */}
+            {/* Recent Analogies Section */}
             <motion.div
               variants={{
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0 },
               }}
-              className="rounded-lg border border-white/10 bg-white/5 p-6"
+              className="rounded-lg border border-white/10 bg-white/5 p-4 sm:p-6"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-white">
-                  Recent Activity
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-white">
+                  Recent Analogies
                 </h3>
                 {recentAnalogies.length > 0 && (
                   <button
                     onClick={() => router.push("/past-analogies")}
-                    className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
+                    className="text-xs sm:text-sm text-purple-400 hover:text-purple-300 transition-colors"
                   >
-                    View All
+                    Browse Library
                   </button>
                 )}
               </div>
 
               {loadingRecentAnalogies ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[1, 2, 3].map((id) => (
                     <div
                       key={id}
-                      className="bg-black/20 rounded-lg p-6 border border-white/10 animate-pulse"
+                      className="bg-black/20 rounded-lg p-4 sm:p-6 border border-white/10 animate-pulse"
                     >
                       <div className="h-4 bg-gray-700 rounded mb-3"></div>
                       <div className="h-3 bg-gray-700 rounded mb-2"></div>
@@ -1011,15 +988,15 @@ export default function DashboardPage() {
                   ))}
                 </div>
               ) : recentAnalogies.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <HiOutlineLightBulb className="w-8 h-8 text-purple-400" />
+                <div className="text-center py-8 sm:py-12">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <HiOutlineLightBulb className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400" />
                   </div>
-                  <h4 className="text-lg font-medium text-gray-300 mb-2">
-                    No Recent Activity
+                  <h4 className="text-base sm:text-lg font-medium text-gray-300 mb-2">
+                    Your Library is Empty
                   </h4>
-                  <p className="text-gray-500 mb-6">
-                    Create your first analogy to see it appear here
+                  <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-6 px-4">
+                    Create your first analogy to add it to your personal library
                   </p>
                   <MovingBorderButton
                     onClick={() => router.push("/")}
@@ -1027,13 +1004,13 @@ export default function DashboardPage() {
                     duration={3000}
                     containerClassName="w-auto h-auto"
                     borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
-                    className="px-6 py-3 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md"
+                    className="px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md text-sm sm:text-base"
                   >
                     Create Your First Analogy
                   </MovingBorderButton>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {recentAnalogies.map((analogy, index) => (
                     <motion.div
                       key={analogy.id}
@@ -1044,14 +1021,14 @@ export default function DashboardPage() {
                       onClick={() => handleViewAnalogy(analogy.id)}
                     >
                       <BackgroundGradient containerClassName="rounded-lg p-[2px] h-full">
-                        <div className="w-full bg-black rounded-lg p-6 h-full flex flex-col">
+                        <div className="w-full bg-black rounded-lg p-4 sm:p-6 h-full flex flex-col">
                           {/* Header */}
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <h4 className="text-lg font-bold text-white mb-2 line-clamp-2">
+                          <div className="flex items-start justify-between mb-3 sm:mb-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-base sm:text-lg font-bold text-white mb-2 line-clamp-2">
                                 {analogy.analogy_json.title}
                               </h4>
-                              <p className="text-sm text-gray-400">
+                              <p className="text-xs sm:text-sm text-gray-400">
                                 Explain {analogy.topic} like I&apos;m a{" "}
                                 {analogy.audience}
                               </p>
@@ -1061,44 +1038,50 @@ export default function DashboardPage() {
                                 handleDeleteAnalogy(analogy.id, e)
                               }
                               disabled={deletingAnalogy === analogy.id}
-                              className="text-gray-500 hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="text-gray-500 hover:text-red-400 transition-colors p-1 rounded-md hover:bg-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 ml-2"
                               title="Delete analogy"
                             >
                               {deletingAnalogy === analogy.id ? (
-                                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                                <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
                               ) : (
-                                <HiOutlineTrash className="w-4 h-4" />
+                                <HiOutlineTrash className="w-3 h-3 sm:w-4 sm:h-4" />
                               )}
                             </button>
                           </div>
 
                           {/* Summary */}
-                          <p className="text-gray-300 text-sm mb-4 flex-1 line-clamp-3 transition duration-200 group-hover:translate-x-1">
+                          <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4 flex-1 line-clamp-3 transition duration-200 group-hover:translate-x-1">
                             {truncateText(analogy.analogy_json.summary, 100)}
                           </p>
 
-                          {/* Preview Images */}
+                          {/* Preview Images - Show only first image with indicator */}
                           {analogy.image_urls &&
                             analogy.image_urls.length > 0 && (
-                              <div className="flex space-x-2 mb-4 transition duration-200 group-hover:translate-x-1">
-                                {analogy.image_urls.map((url, imgIndex) => (
-                                  <div
-                                    key={imgIndex}
-                                    className="w-12 h-12 rounded-md overflow-hidden bg-gray-800 flex-shrink-0"
-                                  >
-                                    <img
-                                      src={getFullImageUrl(url)}
-                                      alt={`Chapter ${imgIndex + 1}`}
-                                      className="w-full h-full object-cover"
-                                      onError={(e) => {
-                                        // Use fallback image instead of hiding
-                                        const fallbackImage = `/static/assets/default_image${imgIndex % 3}.jpeg`;
-                                        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-                                        e.currentTarget.src = `${backendUrl}${fallbackImage}`;
-                                      }}
-                                    />
+                              <div className="flex items-center space-x-2 mb-3 sm:mb-4 transition duration-200 group-hover:translate-x-1">
+                                {/* First image */}
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-md overflow-hidden bg-gray-800 flex-shrink-0 relative">
+                                  <CachedImage
+                                    src={getFullImageUrl(analogy.image_urls[0])}
+                                    alt="Chapter 1"
+                                    width={48}
+                                    height={48}
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                    fallbackSrc={`${
+                                      process.env.NEXT_PUBLIC_API_URL ||
+                                      "http://localhost:8000"
+                                    }/static/assets/default_image0.jpeg`}
+                                  />
+                                </div>
+
+                                {/* Show indicator if there are more images */}
+                                {analogy.image_urls.length > 1 && (
+                                  <div className="flex items-center space-x-1">
+                                    <span className="text-xs text-gray-500 ml-1">
+                                      +{analogy.image_urls.length - 1} more
+                                    </span>
                                   </div>
-                                ))}
+                                )}
                               </div>
                             )}
 
@@ -1106,10 +1089,10 @@ export default function DashboardPage() {
                           <div className="flex items-center justify-between text-xs text-gray-500 mt-auto transition duration-200 group-hover:translate-x-1">
                             <div className="flex items-center space-x-1">
                               <HiOutlineClock className="w-3 h-3" />
-                              <span>{formatDateTime(analogy.created_at)}</span>
+                              <span className="text-xs">{formatDateTime(analogy.created_at)}</span>
                             </div>
-                            <div className="text-purple-400 transition-colors">
-                              View Details →
+                            <div className="text-purple-400 transition-colors text-xs">
+                              View →
                             </div>
                           </div>
                         </div>

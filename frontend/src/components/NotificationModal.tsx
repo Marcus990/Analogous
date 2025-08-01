@@ -102,14 +102,14 @@ export default function NotificationModal({
           onClick={handleBackdropClick}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
             className="relative w-full max-w-sm sm:max-w-md lg:max-w-lg"
           >
             <BackgroundGradient containerClassName="rounded-lg p-[2px]">
-              <div className="relative bg-black rounded-lg p-4 sm:p-6 lg:p-8">
+              <div className="w-full relative bg-black rounded-lg p-4 sm:p-6 lg:p-8">
                 {/* Close button */}
                 <button
                   onClick={onClose}

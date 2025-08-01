@@ -182,6 +182,13 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: "NewComicTitleExpanded";
+  src: url("/fonts/NewComicTitleExpanded.otf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 
 html,
 body {

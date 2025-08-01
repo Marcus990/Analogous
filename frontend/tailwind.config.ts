@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import plugin from 'tailwindcss/plugin';
 
 const config: Config = {
   darkMode: 'class',
@@ -15,7 +16,25 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(function ({ addUtilities }) {
+      const newUtilities = {
+        '.text-stroke': {
+          '-webkit-text-stroke': '1px white',
+        },
+        '.text-stroke-2': {
+          '-webkit-text-stroke': '2px white',
+        },
+        '.text-stroke-black': {
+          '-webkit-text-stroke': '1px black',
+        },
+        '.text-stroke-purple': {
+          '-webkit-text-stroke': '1px #a855f7',
+        },
+      };
+      addUtilities(newUtilities);
+    }),
+  ],
 };
 
 export default config; 
