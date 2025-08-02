@@ -1,0 +1,488 @@
+.speech-bubble {
+  text-align: left;
+  font-family: "KomikaHand", cursive;
+  font-size: clamp(2px, 2.5vw, 16px);
+  font-weight: bold;
+  color: var(--text-color);
+  background: var(--bubble-color);
+  padding: clamp(0.5em, 2vw, 1em);
+  position: absolute;
+  border-radius: var(--bubble-corners);
+  box-shadow: 0 0 0 var(--border-size) var(--border-color);
+  z-index: 100;
+  line-height: 1.4;
+}
+
+/* Responsive font sizes for different screen sizes */
+@media (max-width: 640px) {
+  .speech-bubble {
+    font-size: clamp(6px, 2.2vw, 10px);
+    padding: clamp(0.4em, 2.5vw, 0.8em);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .speech-bubble {
+    font-size: clamp(7px, 1.6vw, 12px);
+    padding: clamp(0.5em, 1.8vw, 0.9em);
+  }
+}
+
+@media (min-width: 1025px) {
+  .speech-bubble {
+    font-size: clamp(8px, 1.4vw, 14px);
+    padding: clamp(0.6em, 1.5vw, 1em);
+  }
+}
+
+/* PRIMARY bubble */
+.speech-bubble-primary {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  /* top: 1rem;
+  left: 1rem;
+  max-width: 80%;
+  --arrow-left: 80%; */
+}
+
+/* SECONDARY bubble */
+.speech-bubble-secondary {
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+}
+
+/* CENTER bubble - for slides 2, 4, 6 */
+.speech-bubble-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  bottom: auto;
+}
+
+.speech-bubble-third {
+  bottom: 1rem;
+  left: 1rem;
+  width: 70%;
+}
+
+.speech-bubble-fourth {
+  bottom: 1rem;
+  right: 1rem;
+  width: 50%;
+}
+
+/* Arrow logic (shared arrow styles but positioned per bubble via custom var) */
+.speech-bubble-primary::after,
+.speech-bubble-secondary::after,
+.speech-bubble-primary::before,
+.speech-bubble-secondary::before {
+  /* content: "";
+  position: absolute;
+  border-style: solid;
+  border-width: var(--arrow-h) var(--arrow-w);
+  left: var(--arrow-left); */
+  display: none;
+}
+
+.speech-bubble.no-arrow::before,
+.speech-bubble.no-arrow::after,
+.speech-bubble-secondary.no-arrow::before,
+.speech-bubble-secondary.no-arrow::after {
+  display: none;
+}
+
+/* PRIMARY arrow direction */
+.speech-bubble-primary::after {
+  bottom: calc(-1 * var(--arrow-h) * 2 + 0.5px);
+  border-color: var(--bubble-color) transparent transparent;
+}
+
+.speech-bubble-primary::before {
+  bottom: calc(-1 * var(--arrow-h) * 2 - 2.5 * var(--border-size));
+  border-width: calc(var(--arrow-h) + var(--border-size))
+    calc(var(--arrow-w) + var(--border-size));
+  border-color: var(--border-color) transparent transparent;
+  left: calc(var(--arrow-left) - var(--border-size));
+}
+
+/* SECONDARY arrow direction */
+.speech-bubble-secondary::after {
+  top: calc(-1 * var(--arrow-h) * 2 + 0.5px);
+  border-color: transparent transparent var(--bubble-color);
+}
+
+.speech-bubble-secondary::before {
+  top: calc(-1 * var(--arrow-h) * 2 - 2.5 * var(--border-size));
+  border-width: calc(var(--arrow-h) + var(--border-size))
+    calc(var(--arrow-w) + var(--border-size));
+  border-color: transparent transparent var(--border-color);
+  left: calc(var(--arrow-left) - var(--border-size));
+}
+
+/* Default bubble variables */
+.speech-bubble-default {
+  --bubble-color: white;
+  --border-color: black;
+  --arrow-h: 10px;
+  --arrow-w: 12px;
+  --border-size: 3px;
+  --bubble-corners: 1em;
+  --text-color: black;
+}
+
+/* Character speech bubbles with tails pointing to center */
+.character-speech-bubble {
+  text-align: center;
+  font-family: "KomikaHand", cursive;
+  font-weight: bold;
+  color: black;
+  background: white;
+  position: absolute;
+  border: 2px solid black;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  overflow: visible;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Character speech bubble positions */
+.character-bubble-top-left {
+  top: 5%;
+  left: 10%;
+  transform: translate(-10%, -20%);
+  border-radius: 70% 60% 65% 75% / 60% 70% 65% 80%;
+  max-width: 45%;
+  min-width: 80px;
+  padding: clamp(0.5rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
+  font-size: clamp(8px, 1.8vw, 14px);
+}
+
+.character-bubble-top-right {
+  top: 10%;
+  right: 10%;
+  transform: translate(20%, -20%);
+  border-radius: 65% 75% 70% 60% / 70% 60% 75% 65%;
+  max-width: 45%;
+  min-width: 80px;
+  padding: clamp(0.5rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
+  font-size: clamp(8px, 1.8vw, 14px);
+}
+
+.character-bubble-middle-left {
+  top: 70%;
+  left: 15%;
+  transform: translate(-30%, -50%);
+  border-radius: 60% 80% 60% 80% / 75% 65% 70% 60%;
+  max-width: 20vw;
+  min-width: 50px;
+  padding: clamp(0.5rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
+  font-size: clamp(8px, 1.8vw, 14px);
+}
+
+.character-bubble-middle-right {
+  top: 40%;
+  right: 5%;
+  transform: translate(30%, -50%);
+  border-radius: 80% 60% 80% 60% / 60% 75% 65% 70%;
+  max-width: 45%;
+  min-width: 80px;
+  padding: clamp(0.5rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2rem);
+  font-size: clamp(8px, 1.8vw, 14px);
+}
+
+/* Speech bubble tails pointing to center */
+/* .character-bubble-top-left::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: clamp(6px, 1.5vw, 10px) solid transparent;
+  border-right: clamp(6px, 1.5vw, 10px) solid transparent;
+  border-top: clamp(8px, 2vw, 14px) solid white;
+  bottom: clamp(-6px, -1.5vw, -7px);
+  right: clamp(15px, 4vw, 70px);
+  transform: rotate(115deg);
+  transform-origin: center;
+  z-index: 2;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.3));
+}
+
+.character-bubble-top-left::before {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-left: clamp(8px, 2vw, 12px) solid transparent;
+  border-right: clamp(8px, 2vw, 12px) solid transparent;
+  border-top: clamp(10px, 2.5vw, 16px) solid black;
+  bottom: clamp(-8px, -2vw, -9px);
+  right: clamp(13px, 3.8vw, 68px);
+  transform: rotate(115deg);
+  transform-origin: center;
+  z-index: 1;
+}
+
+.character-bubble-top-right::after {
+  content: "";
+  position: absolute;
+  bottom: clamp(2px, 1vw, 4px);
+  left: clamp(10px, 3vw, 20px);
+  transform: rotate(25deg);
+  width: 0;
+  height: 0;
+  border-left: clamp(6px, 1.5vw, 8px) solid transparent;
+  border-right: clamp(6px, 1.5vw, 8px) solid transparent;
+  border-top: clamp(8px, 2vw, 12px) solid white;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.3));
+}
+
+.character-bubble-top-right::before {
+  content: "";
+  position: absolute;
+  bottom: clamp(-2px, -0.5vw, 0px);
+  left: clamp(8px, 2.5vw, 18px);
+  transform: rotate(25deg);
+  width: 0;
+  height: 0;
+  border-left: clamp(8px, 2vw, 10px) solid transparent;
+  border-right: clamp(8px, 2vw, 10px) solid transparent;
+  border-top: clamp(10px, 2.5vw, 14px) solid black;
+  z-index: -1;
+}
+
+.character-bubble-middle-left::after {
+  content: "";
+  position: absolute;
+  top: clamp(-4px, -1vw, -2px);
+  right: clamp(20px, 6vw, 60px);
+  width: 0;
+  height: 0;
+  transform: rotate(45deg);
+  border-top: clamp(6px, 1.5vw, 8px) solid transparent;
+  border-bottom: clamp(6px, 1.5vw, 8px) solid transparent;
+  border-left: clamp(8px, 2vw, 12px) solid white;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.3));
+}
+
+.character-bubble-middle-left::before {
+  content: "";
+  position: absolute;
+  top: clamp(-8px, -2vw, -6px);
+  right: clamp(18px, 5vw, 58px);
+  transform: rotate(45deg);
+  width: 0;
+  height: 0;
+  border-top: clamp(8px, 2vw, 10px) solid transparent;
+  border-bottom: clamp(8px, 2vw, 10px) solid transparent;
+  border-left: clamp(10px, 2.5vw, 14px) solid black;
+  z-index: -1;
+}
+
+.character-bubble-middle-right::after {
+  content: "";
+  position: absolute;
+  top: clamp(-4px, -1vw, -2px);
+  left: clamp(20px, 6vw, 60px);
+  width: 0;
+  height: 0;
+  transform: rotate(-45deg);
+  border-top: clamp(6px, 1.5vw, 8px) solid transparent;
+  border-bottom: clamp(6px, 1.5vw, 8px) solid transparent;
+  border-right: clamp(8px, 2vw, 12px) solid white;
+  filter: drop-shadow(1px 1px 0 rgba(0, 0, 0, 0.3));
+}
+
+.character-bubble-middle-right::before {
+  content: "";
+  position: absolute;
+  top: clamp(-8px, -2vw, -6px);
+  left: clamp(18px, 5vw, 58px);
+  transform: rotate(-45deg);
+  width: 0;
+  height: 0;
+  border-top: clamp(8px, 2vw, 10px) solid transparent;
+  border-bottom: clamp(8px, 2vw, 10px) solid transparent;
+  border-right: clamp(10px, 2.5vw, 14px) solid black;
+  z-index: -1;
+} */
+
+/* Responsive adjustments for character speech bubbles */
+@media (max-width: 640px) {
+  .character-speech-bubble {
+    font-size: clamp(6px, 2.2vw, 10px);
+    padding: clamp(0.3rem, 2.5vw, 0.8rem) clamp(0.5rem, 3.5vw, 1.2rem);
+    max-width: 35%;
+    min-width: 60px;
+  }
+  
+  .character-bubble-top-left,
+  .character-bubble-top-right,
+  .character-bubble-middle-left,
+  .character-bubble-middle-right {
+    font-size: clamp(6px, 2.2vw, 10px);
+    padding: clamp(0.3rem, 2.5vw, 0.8rem) clamp(0.5rem, 3.5vw, 1.2rem);
+    max-width: 35%;
+    min-width: 60px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .character-speech-bubble {
+    font-size: clamp(7px, 1.6vw, 12px);
+    padding: clamp(0.4rem, 2vw, 1rem) clamp(0.8rem, 2.5vw, 1.5rem);
+    max-width: 35%;
+    min-width: 70px;
+  }
+  
+  .character-bubble-top-left,
+  .character-bubble-top-right,
+  .character-bubble-middle-left,
+  .character-bubble-middle-right {
+    font-size: clamp(7px, 1.6vw, 12px);
+    padding: clamp(0.4rem, 2vw, 1rem) clamp(0.8rem, 2.5vw, 1.5rem);
+    max-width: 35%;
+    min-width: 70px;
+  }
+}
+
+@media (min-width: 1025px) {
+  .character-speech-bubble {
+    font-size: clamp(8px, 1.4vw, 14px);
+    padding: clamp(0.5rem, 1.5vw, 1.5rem) clamp(1rem, 2vw, 2rem);
+    max-width: 40%;
+    min-width: 80px;
+  }
+  
+  .character-bubble-top-left,
+  .character-bubble-top-right,
+  .character-bubble-middle-left,
+  .character-bubble-middle-right {
+    font-size: clamp(8px, 1.4vw, 14px);
+    padding: clamp(0.5rem, 1.5vw, 1.5rem) clamp(1rem, 2vw, 2rem);
+    max-width: 40%;
+    min-width: 80px;
+  }
+}
+
+/* Bold markdown text styling */
+.bold-markdown-text {
+  font-family: "KomikaHandBoldItalic", cursive !important;
+  font-weight: bold !important;
+  font-style: italic !important;
+  font-size: clamp(0.5rem, 2.8vw, 1.1rem) !important;
+  color: inherit !important;
+  /* Ensure bold text doesn't disrupt line height */
+  line-height: inherit !important;
+  vertical-align: baseline !important;
+  display: inline !important;
+}
+
+/* PNG Speech Bubble - Auto-scaling with text content */
+.png-speech-bubble {
+  position: absolute;
+  z-index: 100;
+  background-image: url('/assets/SpeechBubble.png');
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  min-width: 200px;
+  min-height: 100px;
+  max-width: 1200px;
+  max-height: 600px;
+  box-sizing: border-box;
+  /* CSS custom properties for dynamic sizing */
+  --min-bubble-width: 200px;
+  --min-bubble-height: 100px;
+}
+
+.png-speech-bubble-content {
+  text-align: left;
+  font-family: "KomikaHand", cursive;
+  font-size: clamp(2px, 2.5vw, 16px);
+  font-weight: bold;
+  color: black;
+  line-height: 1.4;
+  padding: clamp(0.5em, 2vw, 1em);
+  box-sizing: border-box;
+
+  /* Let text wrap naturally */
+  word-wrap: break-word;
+  white-space: normal;
+
+  /* Keep as block display */
+  display: block;
+
+  /* Optional debug border */
+  border: 2px solid red;
+  
+  /* Auto-size to fit content with 1920x1280 aspect ratio */
+  width: fit-content;
+  height: fit-content;
+  min-width: 100px;
+  min-height: 50px;
+  
+  /* Center the text box within the PNG bubble using absolute positioning */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+
+/* PNG Speech Bubble positions - same as original speech bubbles */
+.png-speech-bubble-primary {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.png-speech-bubble-secondary {
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.png-speech-bubble-third {
+  bottom: 1rem;
+  left: 1rem;
+}
+
+.png-speech-bubble-fourth {
+  bottom: 1rem;
+  right: 1rem;
+}
+
+/* Responsive adjustments for PNG speech bubbles */
+@media (max-width: 640px) {
+  .png-speech-bubble-content {
+    font-size: clamp(6px, 2.2vw, 10px);
+    padding: clamp(0.4em, 2.5vw, 0.8em);
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .png-speech-bubble-content {
+    font-size: clamp(7px, 1.6vw, 12px);
+    padding: clamp(0.5em, 1.8vw, 0.9em);
+  }
+}
+
+@media (min-width: 1025px) {
+  .png-speech-bubble-content {
+    font-size: clamp(8px, 1.4vw, 14px);
+    padding: clamp(0.6em, 1.5vw, 1em);
+  }
+}
