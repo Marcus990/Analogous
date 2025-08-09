@@ -308,7 +308,8 @@ async def health_check():
 
 @app.get("/health")
 async def health():
-    return {"status": "healthy"}
+    """Simple health check for Railway deployment"""
+    return {"status": "healthy", "service": "Analogous API"}
 
 # In-memory storage for analogies (replace with database in production)
 # analogies_db = {}  # Removed - now using Supabase table
@@ -2594,8 +2595,9 @@ async def get_user_lifetime_analogies_count(user_id: str):
         traceback.print_exc()
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.get("/health")
-async def health_check():
+@app.get("/health/detailed")
+async def detailed_health_check():
+    """Detailed health check with database connectivity"""
     try:
         # Test database connection
         test_response = supabase_client.table("user_information").select("id").limit(1).execute()
