@@ -11,6 +11,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Analogous - AI-Powered Analogies",
   description: "Create compelling analogies with the help of AI",
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
 };
 
 export default function RootLayout({
@@ -20,6 +25,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      </head>
       <body className={`${inter.className} bg-black min-h-screen text-white`}>
         <AuthProvider>
           <NotificationProvider>

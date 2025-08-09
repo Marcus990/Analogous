@@ -227,7 +227,7 @@ export const HoloCard = ({
 
           {/* Dropdown menu */}
           {isMenuOpen && (
-            <div className="absolute top-8 right-0 bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg shadow-lg min-w-[90px] sm:min-w-[110px] md:min-w-[130px] z-[99999] animate-in fade-in-0 zoom-in-95 duration-200">
+            <div className="absolute top-8 right-0 bg-black/90 backdrop-blur-sm border border-white/50 rounded-lg shadow-lg min-w-[90px] sm:min-w-[110px] md:min-w-[130px] z-[99999] animate-in fade-in-0 zoom-in-95 duration-200">
               <div className="py-1">
                 <button
                   onClick={handleDropToTopic}

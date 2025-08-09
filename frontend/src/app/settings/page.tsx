@@ -80,6 +80,11 @@ export default function SettingsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+
+  // Clear analogy history
+  const [showClearHistoryModal, setShowClearHistoryModal] = useState(false);
+  const [clearingHistory, setClearingHistory] = useState(false);
+  const [clearHistoryConfirmation, setClearHistoryConfirmation] = useState("");
   
   // Navigation state
   const [activeSection, setActiveSection] = useState("profile");
@@ -298,6 +303,72 @@ export default function SettingsPage() {
     }
   };
 
+  const handleClearHistory = async () => {
+    if (!user) return;
+
+    setClearingHistory(true);
+    setError("");
+
+    try {
+      // First, get all user analogies
+      const analogiesResponse = await api.getUserAnalogies(user.id);
+      
+      if (analogiesResponse.status !== "success" || !analogiesResponse.analogies) {
+        setError("Failed to fetch analogy history. Please try again.");
+        return;
+      }
+
+      const analogies = analogiesResponse.analogies;
+      
+      if (analogies.length === 0) {
+        setSuccess("No analogy history to clear.");
+        setShowClearHistoryModal(false);
+        setClearHistoryConfirmation("");
+        return;
+      }
+
+      // Delete each analogy one by one
+      let deletedCount = 0;
+      let errorCount = 0;
+
+      for (const analogy of analogies) {
+        try {
+          await api.deleteAnalogy(analogy.id);
+          deletedCount++;
+        } catch (err) {
+          console.error(`Error deleting analogy ${analogy.id}:`, err);
+          errorCount++;
+        }
+      }
+
+      if (errorCount === 0) {
+        setSuccess(`Successfully cleared all ${deletedCount} analogies from your history!`);
+        showNotification({
+          title: "Success",
+          message: `Successfully cleared all ${deletedCount} analogies from your history!`,
+          type: "success"
+        });
+      } else if (deletedCount > 0) {
+        setSuccess(`Cleared ${deletedCount} analogies. ${errorCount} analogies could not be deleted.`);
+        showNotification({
+          title: "Partial Success",
+          message: `Cleared ${deletedCount} analogies. ${errorCount} analogies could not be deleted.`,
+          type: "success"
+        });
+      } else {
+        setError("Failed to clear any analogies. Please try again.");
+      }
+
+      setShowClearHistoryModal(false);
+      setClearHistoryConfirmation("");
+    } catch (err) {
+      console.error("Error clearing analogy history:", err);
+      setError(err instanceof Error ? err.message : "Failed to clear analogy history. Please try again.");
+    } finally {
+      setClearingHistory(false);
+    }
+  };
+
   if (loading || loadingProfile) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -349,7 +420,7 @@ export default function SettingsPage() {
                 document.getElementById('profile-section')?.scrollIntoView({ behavior: 'smooth' });
                 setActiveSection("profile");
               }}
-              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors duration-200 text-xs sm:text-sm ${
+              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-md ${
                 activeSection === "profile"
                   ? "text-white bg-purple-600 shadow-sm"
                   : "text-gray-400 hover:text-white hover:bg-white/10"
@@ -366,7 +437,7 @@ export default function SettingsPage() {
                 document.getElementById('security-section')?.scrollIntoView({ behavior: 'smooth' });
                 setActiveSection("security");
               }}
-              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors duration-200 text-xs sm:text-sm ${
+              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-md ${
                 activeSection === "security"
                   ? "text-white bg-blue-600 shadow-sm"
                   : "text-gray-400 hover:text-white hover:bg-white/10"
@@ -383,7 +454,7 @@ export default function SettingsPage() {
                 document.getElementById('danger-section')?.scrollIntoView({ behavior: 'smooth' });
                 setActiveSection("danger");
               }}
-              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-colors duration-200 text-xs sm:text-sm ${
+              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-md ${
                 activeSection === "danger"
                   ? "text-white bg-red-600 shadow-sm"
                   : "text-gray-400 hover:text-white hover:bg-white/10"
@@ -391,7 +462,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                 <IconTrash size={14} className="sm:w-4 sm:h-4" />
-                <span>Danger</span>
+                <span>Data</span>
               </div>
             </button>
           </div>
@@ -748,8 +819,8 @@ export default function SettingsPage() {
                   <IconTrash className="w-3 h-3 sm:w-4 sm:h-4 text-red-300" />
                 </div>
                 <div>
-                  <h2 className="text-base sm:text-lg font-semibold text-white">Danger Zone</h2>
-                  <p className="text-gray-400 text-xs sm:text-sm">Irreversible and destructive actions</p>
+                  <h2 className="text-base sm:text-lg font-semibold text-white">Data Management</h2>
+                  <p className="text-gray-400 text-xs sm:text-sm">Manage your analogy history and account data</p>
                 </div>
               </div>
             </div>
@@ -762,34 +833,16 @@ export default function SettingsPage() {
                     <IconTrash className="w-4 h-4 sm:w-5 sm:h-5 text-red-300" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-white mb-2">Delete Account</h3>
+                    <h3 className="text-base sm:text-lg font-semibold text-white mb-2">Clear Analogy History</h3>
                     <p className="text-gray-300 text-xs sm:text-sm mb-3 sm:mb-4">
-                      Once you delete your account, there is no going back. Please be certain. This action will permanently remove:
+                      This action will permanently delete all your analogy history. This cannot be undone.
                     </p>
-                    <ul className="text-xs sm:text-sm text-gray-400 space-y-1 mb-4 sm:mb-6">
-                      <li className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                        <span>All your created analogies and content</span>
-                      </li>
-                      <li className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                        <span>Your profile information and preferences</span>
-                      </li>
-                      <li className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                        <span>Your streak data and progress</span>
-                      </li>
-                      <li className="flex items-center space-x-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                        <span>All account settings and data</span>
-                      </li>
-                    </ul>
                     <button
-                      onClick={() => setShowDeleteModal(true)}
+                      onClick={() => setShowClearHistoryModal(true)}
                       className="w-full flex items-center justify-center space-x-2 sm:space-x-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium transition-all duration-200 shadow-lg text-sm sm:text-base"
                     >
                       <IconTrash size={16} className="sm:w-[18px] sm:h-[18px]" />
-                      <span>Delete My Account</span>
+                      <span>Clear My Analogy History</span>
                     </button>
                   </div>
                 </div>
@@ -813,6 +866,24 @@ export default function SettingsPage() {
         confirmText="Delete Account"
         cancelText="Cancel"
         isLoading={deletingAccount}
+        type="danger"
+        icon={<IconTrash size={24} />}
+      />
+
+      {/* Clear Analogy History Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showClearHistoryModal}
+        onClose={() => {
+          setShowClearHistoryModal(false);
+          setClearHistoryConfirmation("");
+          setError("");
+        }}
+        onConfirm={handleClearHistory}
+        title="Clear Analogy History"
+        message="Are you sure you want to clear your analogy history? This action cannot be undone. All your analogy history will be permanently deleted."
+        confirmText="Clear History"
+        cancelText="Cancel"
+        isLoading={clearingHistory}
         type="danger"
         icon={<IconTrash size={24} />}
       />

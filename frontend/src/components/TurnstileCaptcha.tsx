@@ -25,8 +25,19 @@ export default function TurnstileCaptcha({
   };
 
   const handleError = (error: string) => {
+    console.error('Turnstile error:', error);
     setToken(null);
-    onError?.(error);
+    
+    // Provide more specific error messages for common errors
+    let errorMessage = "Captcha verification failed. Please try again.";
+    
+    if (error === '600010') {
+      errorMessage = "Captcha widget failed to load. Please refresh the page and try again.";
+    } else if (error.includes('network') || error.includes('timeout')) {
+      errorMessage = "Network error. Please check your connection and try again.";
+    }
+    
+    onError?.(errorMessage);
   };
 
   const handleExpire = () => {

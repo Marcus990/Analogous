@@ -444,6 +444,8 @@ export default function DashboardPage() {
     checkOnboarding();
   }, [user]);
 
+
+
   // Utility function to refresh analogies
   const refreshAnalogies = useCallback(async () => {
     if (!user) return;

@@ -108,7 +108,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <a
-                  href="/"
+                  href="/home"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   Home
@@ -157,7 +157,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <a
-                  href="mailto:info@analogous.com"
+                  href="mailto:info.analogous@gmail.com"
                   className="text-gray-400 hover:text-white transition-colors flex items-center"
                 >
                   <svg
@@ -167,7 +167,7 @@ export default function Footer() {
                   >
                     <path d="M0 3v18h24V3H0zm21.518 2L12 12.713 2.482 5h19.036zM2 19V7.183l10 8.104 10-8.104V19H2z" />
                   </svg>
-                  info@analogous.com
+                  info.analogous@gmail.com
                 </a>
               </li>
             </ul>

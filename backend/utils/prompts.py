@@ -56,8 +56,6 @@
 # Begin writing the analogy now:
 # """
 
-COMIC_STYLE_PREFIX = "comic book, bold outlines, dramatic shadows, halftone, flat shading"
-
 # ANALOGY_PROMPT = """
 # You are an expert analogy creator whose job is to explain complex topics using vivid, creative analogies tailored to specific audiences.
 
@@ -148,13 +146,20 @@ COMIC_STYLE_PREFIX = "comic book, bold outlines, dramatic shadows, halftone, fla
 # {COMIC_STYLE_PREFIX}, black female chef, middle-aged, curly hair, white tall hat, red neckerchief, white apron, black pants, placing tomato pasta dish on pickup counter, steam rising, clean kitchen pass window, smiling, front view, medium shot
 # """
 
+COMIC_STYLE_PREFIX = "comic book, bold outlines, dramatic shadows, halftone, flat shading"
+
+# ANIME_STYLE_PREFIX = "manga, anime, japan, clean lines, screentones, high contrast, color"
+
+
 ANALOGY_PROMPT = """
-You are an expert analogy creator, explaining complex concepts in an educational and informational graphic novel style context. 
+You are an expert analogy creator, explaining complex concepts in an educational and informational comic graphic novel style context. 
 Explain the topic of "{topic}" to an audience of "{audience}" using a creative analogy. 
 Be creative, imaginative, and vivid with your analogy. Strictly follow the output structure below.
 Address the user by name ({user_first_name}) directly in second-person and assume they are a {audience}.
 
 Audience info for context only: {user_info}
+
+Note: Always prioritize the user's request to explain the concept of "{topic}" to them as "{audience}" first, and only use the audience context as background information to be referred to when generating the analogy.
 
 ---
 
@@ -173,8 +178,8 @@ Audience info for context only: {user_info}
 **Comic Book Image Prompt Guidelines:**
 
 Each image prompt must feature **one character** andinclude:
-- **Character Features** (race, gender, age range, hair color, etc.): e.g., "black female chef, curly hair"
-- **Clothing**: e.g., "white baseball cap, black t-shirt, blue pants"
+- **Character Features** with specific race, gender, age range, hair color, etc.: e.g., "black female chef, curly hair"
+- **Clothing** with consistent and specific clothing items: e.g., "white baseball cap, black t-shirt, blue pants"
 - **Action**: e.g., "coding or programming on laptop"
 - **Background**: e.g., "messy bedroom, bookshelf, blue wall"
 - **Perspective**: e.g., "front view, medium shot"
@@ -183,7 +188,7 @@ Each prompt must **repeat full character description** (no references like “sa
 
 **{COMIC_STYLE_PREFIX}**
 
-Each image prompt must be **≤ 77 tokens**. Try to use all 77 tokens to the fullest extent possible.
+Each image prompt must be **≤ 77 tokens**. Try to use all 77 tokens to the fullest extent possible. All characters must be the same.
 
 ---
 

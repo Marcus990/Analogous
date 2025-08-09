@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Management Test Interface</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .section h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .scenario {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        .scenario h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .scenario p {
+            color: #6c757d;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Subscription Management Test Interface</h1>
+        
+        <div class="section">
+            <h2>🔧 Setup</h2>
+            <div class="form-group">
+                <label for="baseUrl">Backend URL:</label>
+                <input type="text" id="baseUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+            </div>
+            <div class="form-group">
+                <label for="userId">User ID:</label>
+                <input type="text" id="userId" value="test-user-id" placeholder="test-user-id">
+            </div>
+            <button onclick="setupTest()">Setup Test Environment</button>
+            <div id="setupResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>📊 Current State</h2>
+            <button onclick="getCurrentState()">Get Current State</button>
+            <div id="currentStateResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>🎯 Manual Plan Operations</h2>
+            <div class="grid">
+                <div>
+                    <h3>Upgrade to Scholar</h3>
+                    <button onclick="upgradePlan()">Upgrade Plan</button>
+                </div>
+                <div>
+                    <h3>Schedule Downgrade</h3>
+                    <button onclick="downgradePlan()">Schedule Downgrade</button>
+                </div>
+                <div>
+                    <h3>Resume Plan</h3>
+                    <button onclick="resumePlan()">Resume Plan</button>
+                </div>
+                <div>
+                    <h3>Set Plan State</h3>
+                    <div class="form-group">
+                        <label for="planType">Plan:</label>
+                        <select id="planType">
+                            <option value="curious">Curious (Free)</option>
+                            <option value="scholar">Scholar (Paid)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="subscriptionStartDate">Subscription Start Date:</label>
+                        <input type="datetime-local" id="subscriptionStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="renewalDate">Renewal Date:</label>
+                        <input type="date" id="renewalDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="upcomingPlan">Upcoming Plan:</label>
+                        <select id="upcomingPlan">
+                            <option value="">None</option>
+                            <option value="curious">Curious</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="planCancelled"> Plan Cancelled
+                        </label>
+                    </div>
+                    <button onclick="setPlanState()">Set Plan State</button>
+                </div>
+            </div>
+            <div id="manualResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>⏰ Date Simulation</h2>
+            <div class="form-group">
+                <label for="simulateDate">Simulate Date:</label>
+                <input type="date" id="simulateDate">
+            </div>
+            <button onclick="simulateDate()">Simulate Date</button>
+            <div id="simulateResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="section">
+            <h2>🧪 Test Scenarios</h2>
+            <div class="grid">
+                <div class="scenario">
+                    <h3>Scenario 1: Normal Flow</h3>
+                    <p>Test the complete upgrade → downgrade → resume flow</p>
+                    <button onclick="runScenario1()">Run Scenario 1</button>
+                </div>
+                <div class="scenario">
+                    <h3>Scenario 2: Billing Renewal</h3>
+                    <p>Test billing cycle renewal with past renewal date</p>
+                    <button onclick="runScenario2()">Run Scenario 2</button>
+                </div>
+                <div class="scenario">
+                    <h3>Scenario 3: Scheduled Downgrade</h3>
+                    <p>Test scheduled downgrade processing</p>
+                    <button onclick="runScenario3()">Run Scenario 3</button>
+                </div>
+                <div class="scenario">
+                    <h3>Scenario 4: Edge Case</h3>
+                    <p>Test cancellation before renewal date</p>
+                    <button onclick="runScenario4()">Run Scenario 4</button>
+                </div>
+            </div>
+            <div id="scenarioResult" class="result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = document.getElementById('baseUrl');
+        const userId = document.getElementById('userId');
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.style.display = 'block';
+        }
+
+        function hideResult(elementId) {
+            document.getElementById(elementId).style.display = 'none';
+        }
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, data: { error: error.message }, status: 0 };
+            }
+        }
+
+        async function setupTest() {
+            hideResult('setupResult');
+            showResult('setupResult', 'Setting up test environment...', 'info');
+            
+            // For now, just validate the inputs
+            if (!baseUrl.value || !userId.value) {
+                showResult('setupResult', 'Please provide both Backend URL and User ID', 'error');
+                return;
+            }
+            
+            showResult('setupResult', 'Test environment ready!\nBackend URL: ' + baseUrl.value + '\nUser ID: ' + userId.value, 'success');
+        }
+
+        async function getCurrentState() {
+            hideResult('currentStateResult');
+            showResult('currentStateResult', 'Fetching current state...', 'info');
+            
+            const result = await makeRequest(`${baseUrl.value}/admin/test/get-user-plan-state/${userId.value}`);
+            
+            if (result.success) {
+                showResult('currentStateResult', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('currentStateResult', `Error: ${JSON.stringify(result.data, null, 2)}`, 'error');
+            }
+        }
+
+        async function upgradePlan() {
+            hideResult('manualResult');
+            showResult('manualResult', 'Upgrading plan...', 'info');
+            
+            const result = await makeRequest(`${baseUrl.value}/user/${userId.value}/upgrade-plan`, {
+                method: 'POST',
+                body: JSON.stringify({})
+            });
+            
+            if (result.success) {
+                showResult('manualResult', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('manualResult', `Error: ${JSON.stringify(result.data, null, 2)}`, 'error');
+            }
+        }
+
+        async function downgradePlan() {
+            hideResult('manualResult');
+            showResult('manualResult', 'Scheduling downgrade...', 'info');
+            
+            const result = await makeRequest(`${baseUrl.value}/user/${userId.value}/downgrade-plan`, {
+                method: 'POST'
+            });
+            
+            if (result.success) {
+                showResult('manualResult', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('manualResult', `Error: ${JSON.stringify(result.data, null, 2)}`, 'error');
+            }
+        }
+
+        async function resumePlan() {
+            hideResult('manualResult');
+            showResult('manualResult', 'Resuming plan...', 'info');
+            
+            const result = await makeRequest(`${baseUrl.value}/user/${userId.value}/resume-plan`, {
+                method: 'POST'
+            });
+            
+            if (result.success) {
+                showResult('manualResult', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('manualResult', `Error: ${JSON.stringify(result.data, null, 2)}`, 'error');
+            }
+        }
+
+        async function setPlanState() {
+            hideResult('manualResult');
+            showResult('manualResult', 'Setting plan state...', 'info');
+            
+            const data = {
+                user_id: userId.value,
+                plan: document.getElementById('planType').value,
+                subscription_start_date: document.getElementById('subscriptionStartDate').value,
+                renewal_date: document.getElementById('renewalDate').value,
+                upcoming_plan: document.getElementById('upcomingPlan').value || null,
+                plan_cancelled: document.getElementById('planCancelled').checked
+            };
+            
+            const result = await makeRequest(`${baseUrl.value}/admin/test/set-user-plan-state`, {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            
+            if (result.success) {
+                showResult('manualResult', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('manualResult', `Error: ${JSON.stringify(result.data, null, 2)}`, 'error');
+            }
+        }
+
+        async function simulateDate() {
+            hideResult('simulateResult');
+            const targetDate = document.getElementById('simulateDate').value;
+            
+            if (!targetDate) {
+                showResult('simulateResult', 'Please select a date to simulate', 'error');
+                return;
+            }
+            
+            showResult('simulateResult', `Simulating date: ${targetDate}...`, 'info');
+            
+            const result = await makeRequest(`${baseUrl.value}/admin/test/simulate-date`, {
+                method: 'POST',
+                body: JSON.stringify({ target_date: targetDate })
+            });
+            
+            if (result.success) {
+                showResult('simulateResult', JSON.stringify(result.data, null, 2), 'success');
+            } else {
+                showResult('simulateResult', `Error: ${JSON.stringify(result.data, null, 2)}`, 'error');
+            }
+        }
+
+        async function runScenario1() {
+            hideResult('scenarioResult');
+            showResult('scenarioResult', 'Running Scenario 1: Normal Flow...', 'info');
+            
+            let log = [];
+            
+            // Step 1: Set to Curious
+            log.push('1. Setting to Curious plan...');
+            await setPlanState();
+            
+            // Step 2: Upgrade
+            log.push('2. Upgrading to Scholar...');
+            await upgradePlan();
+            
+            // Step 3: Schedule downgrade
+            log.push('3. Scheduling downgrade...');
+            await downgradePlan();
+            
+            // Step 4: Resume
+            log.push('4. Resuming plan...');
+            await resumePlan();
+            
+            log.push('✅ Scenario 1 completed!');
+            showResult('scenarioResult', log.join('\n'), 'success');
+        }
+
+        async function runScenario2() {
+            hideResult('scenarioResult');
+            showResult('scenarioResult', 'Running Scenario 2: Billing Renewal...', 'info');
+            
+            let log = [];
+            
+            // Set up Scholar plan with past renewal date
+            const today = new Date();
+            const pastRenewalDate = new Date(today.getTime() - 5 * 24 * 60 * 60 * 1000);
+            const pastStartDate = new Date(today.getTime() - 35 * 24 * 60 * 60 * 1000);
+            
+            log.push('1. Setting up Scholar plan with past renewal date...');
+            document.getElementById('planType').value = 'scholar';
+            document.getElementById('subscriptionStartDate').value = pastStartDate.toISOString().slice(0, 16);
+            document.getElementById('renewalDate').value = pastRenewalDate.toISOString().slice(0, 10);
+            document.getElementById('upcomingPlan').value = '';
+            document.getElementById('planCancelled').checked = false;
+            await setPlanState();
+            
+            // Simulate current date
+            log.push('2. Simulating current date...');
+            document.getElementById('simulateDate').value = today.toISOString().slice(0, 10);
+            await simulateDate();
+            
+            log.push('✅ Scenario 2 completed!');
+            showResult('scenarioResult', log.join('\n'), 'success');
+        }
+
+        async function runScenario3() {
+            hideResult('scenarioResult');
+            showResult('scenarioResult', 'Running Scenario 3: Scheduled Downgrade...', 'info');
+            
+            let log = [];
+            
+            // Set up cancelled Scholar plan with past renewal date
+            const today = new Date();
+            const pastRenewalDate = new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000);
+            const pastStartDate = new Date(today.getTime() - 33 * 24 * 60 * 60 * 1000);
+            
+            log.push('1. Setting up cancelled Scholar plan with past renewal date...');
+            document.getElementById('planType').value = 'scholar';
+            document.getElementById('subscriptionStartDate').value = pastStartDate.toISOString().slice(0, 16);
+            document.getElementById('renewalDate').value = pastRenewalDate.toISOString().slice(0, 10);
+            document.getElementById('upcomingPlan').value = 'curious';
+            document.getElementById('planCancelled').checked = true;
+            await setPlanState();
+            
+            // Simulate current date
+            log.push('2. Simulating current date...');
+            document.getElementById('simulateDate').value = today.toISOString().slice(0, 10);
+            await simulateDate();
+            
+            log.push('✅ Scenario 3 completed!');
+            showResult('scenarioResult', log.join('\n'), 'success');
+        }
+
+        async function runScenario4() {
+            hideResult('scenarioResult');
+            showResult('scenarioResult', 'Running Scenario 4: Edge Case...', 'info');
+            
+            let log = [];
+            
+            // Set up Scholar plan with future renewal date
+            const today = new Date();
+            const futureRenewalDate = new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000);
+            const pastStartDate = new Date(today.getTime() - 20 * 24 * 60 * 60 * 1000);
+            
+            log.push('1. Setting up Scholar plan with future renewal date...');
+            document.getElementById('planType').value = 'scholar';
+            document.getElementById('subscriptionStartDate').value = pastStartDate.toISOString().slice(0, 16);
+            document.getElementById('renewalDate').value = futureRenewalDate.toISOString().slice(0, 10);
+            document.getElementById('upcomingPlan').value = '';
+            document.getElementById('planCancelled').checked = false;
+            await setPlanState();
+            
+            // Schedule cancellation
+            log.push('2. Scheduling cancellation...');
+            await downgradePlan();
+            
+            // Simulate date after renewal
+            const afterRenewalDate = new Date(today.getTime() + 15 * 24 * 60 * 60 * 1000);
+            log.push('3. Simulating date after renewal...');
+            document.getElementById('simulateDate').value = afterRenewalDate.toISOString().slice(0, 10);
+            await simulateDate();
+            
+            log.push('✅ Scenario 4 completed!');
+            showResult('scenarioResult', log.join('\n'), 'success');
+        }
+
+        // Set default dates
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const futureDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+            
+            document.getElementById('renewalDate').value = futureDate.toISOString().slice(0, 10);
+            document.getElementById('simulateDate').value = today.toISOString().slice(0, 10);
+        });
+    </script>
+</body>
+</html> 

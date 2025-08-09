@@ -234,7 +234,10 @@ export default function Home() {
       if (error instanceof Error && error.name === "AbortError") {
         console.log("Analogy generation was cancelled by user");
         // Don't show error message for user-initiated cancellation
-      } else if (error instanceof Error && error.message.includes("Authentication required")) {
+      } else if (
+        error instanceof Error &&
+        error.message.includes("Authentication required")
+      ) {
         console.error("Authentication error:", error);
         showNotification({
           title: "Authentication Required",
@@ -246,10 +249,13 @@ export default function Home() {
         router.push("/login");
       } else {
         console.error("Error generating analogy:", error);
-        
+
         // Display the specific error message from the backend
-        const errorMessage = error instanceof Error ? error.message : "Failed to generate analogy. Please try again.";
-        
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Failed to generate analogy. Please try again.";
+
         showNotification({
           title: "Generation Failed",
           message: errorMessage,
@@ -558,7 +564,7 @@ export default function Home() {
           <div className="mt-8 sm:mt-12 flex flex-col items-center space-y-6 sm:space-y-8">
             <div className="my-4 sm:my-6">
               {topicCard && audienceCard ? (
-                <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
+                <div className="flex flex-row items-center justify-center space-y-0 space-x-4">
                   {isGenerating ? (
                     // Grayed out button with spinner
                     <button
@@ -588,10 +594,10 @@ export default function Home() {
                   {canStopGeneration && (
                     <button
                       onClick={handleStopGeneration}
-                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
+                      className="w-12 h-12 min-w-12 min-h-12 max-w-12 max-h-12 sm:min-w-14 sm:min-h-14 sm:max-w-14 sm:max-h-14 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
                       title="Stop Generation"
                     >
-                      <IconSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <IconSquare className="w-5 h-5 sm:w-6 sm:h-6" />
                     </button>
                   )}
                 </div>
@@ -608,13 +614,16 @@ export default function Home() {
             </div>
 
             <div className="w-full max-w-4xl mt-6 sm:mt-8">
-              <form onSubmit={handleAddCard} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <form
+                onSubmit={handleAddCard}
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4"
+              >
                 <input
                   type="text"
                   value={newCard}
                   onChange={(e) => setNewCard(e.target.value)}
                   placeholder="Enter a new card..."
-                  className="flex-1 px-3 sm:px-4 py-2 sm:py-2 rounded-lg bg-black/20 border border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
+                  className="flex-1 px-3 sm:px-4 py-2 sm:py-3 rounded-lg bg-black/20 border border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm sm:text-base"
                 />
                 <MovingBorderButton
                   type="submit"

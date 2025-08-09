@@ -31,7 +31,7 @@ export default function ExplainWords({
   isGenerating = false,
 }: ExplainWordsProps) {
   return (
-    <div className="w-full mb-12 space-y-3 translate-y-8">
+    <div className="w-full mb-12 space-y-3 sm:translate-y-8">
       {/* Row 1: Explain + Topic */}
       <div className="flex flex-col md:flex-row justify-center items-center px-8 gap-x-8 md:-translate-x-12">
         <div className="neonText">
@@ -57,7 +57,7 @@ export default function ExplainWords({
           </div>
         </div>
 
-        <BackgroundGradient containerClassName="w-[240px] h-[100px] md:-translate-y-2">
+        <BackgroundGradient containerClassName="min-w-[240px] max-w-[240px] h-[100px] md:-translate-y-2">
           <div
             className="w-full h-full flex items-center justify-center"
             onDragOver={onDragOver}
@@ -101,7 +101,7 @@ export default function ExplainWords({
           </span>
         ))}
 
-        <BackgroundGradient containerClassName="w-[240px] h-[100px] md:-translate-y-2 md:translate-x-5">
+        <BackgroundGradient containerClassName="min-w-[240px] max-w-[240px] h-[100px] md:-translate-y-2 md:translate-x-5">
           <div
             className="w-full h-full flex items-center justify-center"
             onDragOver={onDragOver}

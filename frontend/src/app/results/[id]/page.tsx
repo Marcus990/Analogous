@@ -1108,9 +1108,10 @@ export default function ResultsPage() {
                                         <h3 className="text-sm sm:text-base md:text-lg text-gray-200 group-hover:text-white transition-colors duration-300 font-medium mb-1">
                                           {link.title}
                                         </h3>
-                                        <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mb-2 line-clamp-2">
-                                          {link.description}
-                                        </p>
+                                        <div 
+                                          className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mb-2 line-clamp-2"
+                                          dangerouslySetInnerHTML={{ __html: link.description }}
+                                        />
                                         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                                           {link.source && (
                                             <span className="bg-gray-700/50 px-2 py-1 rounded">
@@ -1230,9 +1231,10 @@ export default function ResultsPage() {
                                       <h3 className="text-sm sm:text-base md:text-lg text-gray-200 group-hover:text-white transition-colors duration-300 font-medium mb-1">
                                         {link.title}
                                       </h3>
-                                      <p className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mb-2 line-clamp-2">
-                                        {link.description}
-                                      </p>
+                                      <div 
+                                        className="text-xs sm:text-sm text-gray-400 group-hover:text-gray-300 transition-colors duration-300 mb-2 line-clamp-2"
+                                        dangerouslySetInnerHTML={{ __html: link.description }}
+                                      />
                                       <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
                                         {link.source && (
                                           <span className="bg-gray-700/50 px-2 py-1 rounded">

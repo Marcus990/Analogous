@@ -242,3 +242,9 @@ body {
     animation: moveShine 6s linear infinite;
   }
 }
+
+.neonText {
+  text-shadow: 1px 0px 4px #f3f3f3, 2px 0px 4px #e7e2ee, 3px 0px 4px #a4a4fa,
+    2px 0px 3px #8c6af2, 2px 3px 15px #622ef1, 2px 0px 15px, 5px 0px 125px,
+    20px 0vw 200px #521df0, 40px 0vw 200px #2005f0;
+}

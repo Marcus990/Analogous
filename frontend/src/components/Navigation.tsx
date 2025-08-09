@@ -6,19 +6,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import StreakModal from "./StreakModal";
-import { 
-  IconFlame, 
-  IconDashboard, 
-  IconLogout, 
-  IconLogin, 
-  IconUserPlus, 
-  IconMenu2, 
+import {
+  IconFlame,
+  IconDashboard,
+  IconLogout,
+  IconLogin,
+  IconUserPlus,
+  IconMenu2,
   IconX,
   IconHome,
-  IconSchool
+  IconSchool,
 } from "@tabler/icons-react";
+import Image from "next/image";
 import { useStreak } from "@/lib/streakContext";
 import { useRouter } from "next/navigation";
+import { BiBook } from "react-icons/bi";
 
 export default function Navigation() {
   const { user, signOut } = useAuth();
@@ -43,19 +45,30 @@ export default function Navigation() {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  const baseButton = "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 backdrop-blur-sm border";
-  const activeButton = "bg-purple-700/90 hover:bg-purple-800/90 text-white border-purple-600/50";
-  const inactiveButton = "bg-gray-800/80 hover:bg-gray-700/80 text-white border-gray-700/50";
+  const baseButton =
+    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 backdrop-blur-sm border";
+  const activeButton =
+    "bg-purple-700/90 hover:bg-purple-800/90 text-white border-purple-600/50";
+  const inactiveButton =
+    "bg-gray-800/80 hover:bg-gray-700/80 text-white border-gray-700/50";
 
-  const NavButton = ({ href, icon: Icon, label, isActive, onClick }: {
+  const NavButton = ({
+    href,
+    icon: Icon,
+    label,
+    isActive,
+    onClick,
+  }: {
     href?: string;
     icon: any;
     label: string;
     isActive?: boolean;
     onClick?: () => void;
   }) => {
-    const className = `${baseButton} ${isActive ? activeButton : inactiveButton}`;
-    
+    const className = `${baseButton} ${
+      isActive ? activeButton : inactiveButton
+    }`;
+
     if (onClick) {
       return (
         <motion.button
@@ -78,7 +91,13 @@ export default function Navigation() {
     );
   };
 
-  const MobileNavButton = ({ href, icon: Icon, label, isActive, onClick }: {
+  const MobileNavButton = ({
+    href,
+    icon: Icon,
+    label,
+    isActive,
+    onClick,
+  }: {
     href?: string;
     icon: any;
     label: string;
@@ -86,9 +105,11 @@ export default function Navigation() {
     onClick?: () => void;
   }) => {
     const className = `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-      isActive ? "bg-purple-700/90 text-white" : "text-gray-300 hover:bg-gray-800/80"
+      isActive
+        ? "bg-purple-700/90 text-white"
+        : "text-gray-300 hover:bg-gray-800/80"
     }`;
-    
+
     if (onClick) {
       return (
         <button onClick={onClick} className={className}>
@@ -109,7 +130,7 @@ export default function Navigation() {
   return (
     <>
       {/* Floating Navigation Bar */}
-      <div className="relative top-6 left-1/2 transform -translate-x-1/2 z-50 w-[100%] max-w-7xl p-[2px] rounded-lg bg-gradient-to-r from-black via-purple-700 to-black shadow-2xl">
+      <div className="relative top-6 left-1/2 transform -translate-x-1/2 z-50 w-[100%] sm:w-[90%] p-[2px] rounded-lg bg-gradient-to-r from-black via-purple-700 to-black shadow-2xl">
         <motion.nav
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -123,11 +144,36 @@ export default function Navigation() {
               <Link href="/" className="flex items-center">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
-                  className="text-xl sm:text-2xl font-bold tracking-tight text-white"
+                  className="flex items-center gap-2 text-md sm:text-2xl font-bold tracking-tight text-white"
                 >
-                  Analogous
+                  <BiBook className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <span id="analogous-text" className="leading-none">
+                    Analogous
+                  </span>
                 </motion.div>
               </Link>
+
+              {/* Original Logo - Commented out for future use */}
+              {/* <Link href="/" className="flex items-center">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  className="flex flex-col items-center gap-1 text-md sm:text-2xl font-bold tracking-tight text-white"
+                >
+                  <span id="analogous-text" className="leading-none">
+                    Analogous
+                  </span>
+                  <div style={{ width: '7em' }}>
+                    <Image
+                      src="/analogousfinallogo.svg"
+                      alt="Analogous Book Icon"
+                      width={1280}
+                      height={200}
+                      className="w-full h-auto"
+                      style={{ width: '100%', height: 'auto' }}
+                    />
+                  </div>
+                </motion.div>
+              </Link> */}
 
               {/* Desktop Navigation */}
               <div className="hidden md:flex items-center gap-2">
@@ -150,7 +196,9 @@ export default function Navigation() {
                         }`}
                       />
                       <span className="text-sm font-medium">
-                        {loadingStreak ? "..." : streakData?.current_streak_count || 0}
+                        {loadingStreak
+                          ? "..."
+                          : streakData?.current_streak_count || 0}
                       </span>
                     </motion.button>
 
@@ -176,14 +224,13 @@ export default function Navigation() {
                   </>
                 ) : (
                   <>
-                    
                     <NavButton
                       href="/login"
                       icon={IconLogin}
                       label="Sign In"
                       isActive={pathname === "/login"}
                     />
-                    
+
                     <NavButton
                       href="/signup"
                       icon={IconUserPlus}
@@ -224,27 +271,27 @@ export default function Navigation() {
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-                         <motion.div
-               initial={{ x: "100%" }}
-               animate={{ x: 0 }}
-               exit={{ x: "100%" }}
-               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-               className="absolute right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md border-l border-gray-700/50 p-6"
-               onClick={(e) => e.stopPropagation()}
-             >
-               {/* Close Button */}
-               <div className="flex justify-end mb-6">
-                 <motion.button
-                   whileHover={{ scale: 1.05 }}
-                   whileTap={{ scale: 0.95 }}
-                   onClick={() => setIsMobileMenuOpen(false)}
-                   className="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700/80 text-white transition-all duration-200 backdrop-blur-sm border border-gray-700/50"
-                 >
-                   <IconX className="w-5 h-5" />
-                 </motion.button>
-               </div>
-               
-               <div className="flex flex-col gap-4">
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="absolute right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md border-l border-gray-700/50 p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <div className="flex justify-end mb-6">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700/80 text-white transition-all duration-200 backdrop-blur-sm border border-gray-700/50"
+                >
+                  <IconX className="w-5 h-5" />
+                </motion.button>
+              </div>
+
+              <div className="flex flex-col gap-4">
                 {user ? (
                   <>
                     {/* Streak Button */}
@@ -264,7 +311,10 @@ export default function Navigation() {
                         }`}
                       />
                       <span className="text-sm font-medium">
-                        Streak: {loadingStreak ? "..." : streakData?.current_streak_count || 0}
+                        Streak:{" "}
+                        {loadingStreak
+                          ? "..."
+                          : streakData?.current_streak_count || 0}
                       </span>
                     </motion.button>
 
@@ -275,12 +325,12 @@ export default function Navigation() {
                       isActive={pathname === "/dashboard"}
                     />
 
-                                         <MobileNavButton
-                       href="/dashboard/pricing"
-                       icon={IconSchool}
-                       label="My Plan"
-                       isActive={pathname === "/dashboard/pricing"}
-                     />
+                    <MobileNavButton
+                      href="/dashboard/pricing"
+                      icon={IconSchool}
+                      label="My Plan"
+                      isActive={pathname === "/dashboard/pricing"}
+                    />
 
                     <MobileNavButton
                       icon={IconLogout}
@@ -290,14 +340,13 @@ export default function Navigation() {
                   </>
                 ) : (
                   <>
-                    
                     <MobileNavButton
                       href="/login"
                       icon={IconLogin}
                       label="Sign In"
                       isActive={pathname === "/login"}
                     />
-                    
+
                     <MobileNavButton
                       href="/signup"
                       icon={IconUserPlus}
