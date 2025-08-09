@@ -289,9 +289,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "https://localhost:3000", 
-        "https://YOUR-VERCEL-PROJECT.vercel.app",  # Replace with actual Vercel URL
         "https://analogous.app", 
-        "https://www.analogous.app"
+        "https://www.analogous.app",
+        "https://analogous.vercel.app"  # Vercel preview URL
     ],
     allow_credentials=True,
     allow_methods=["*"],
