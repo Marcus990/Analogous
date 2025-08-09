@@ -7,7 +7,7 @@ const nextConfig = {
     appDir: true,
   },
   images: {
-    domains: ['localhost', 'analogous.railway.app'],
+    domains: ['localhost', 'YOUR-PROJECT-NAME.railway.app'],  // Replace with actual Railway domain
     remotePatterns: [
       {
         protocol: 'https',
