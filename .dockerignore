@@ -1,0 +1,44 @@
+# Frontend files (not needed for backend)
+frontend/
+node_modules/
+.next/
+*.log
+
+# Documentation
+*.md
+docs/
+
+# Git
+.git/
+.gitignore
+
+# Environment files (will be set via Railway)
+.env
+.env.local
+.env.production
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Test files
+*test*.py
+test_*
+
+# Temporary files
+*.tmp
+*.temp
