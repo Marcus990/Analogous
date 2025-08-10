@@ -22,6 +22,7 @@ import {
   IconChevronRight,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import "./page.css";
 
 interface AnalogyData {
@@ -271,8 +272,9 @@ export default function PastAnalogiesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <ConfirmationModal
+    <ProtectedRoute>
+      <div className="min-h-screen bg-black text-white">
+        <ConfirmationModal
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
@@ -567,6 +569,7 @@ export default function PastAnalogiesPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

@@ -131,6 +131,9 @@ export const api = {
       if (response.status === 401) {
         throw new Error("Authentication required. Please log in to continue.");
       }
+      if (response.status === 428) {
+        throw new Error("Profile incomplete. Please complete your profile to continue.");
+      }
       
       // Try to extract the specific error message from the response
       let errorMessage = `HTTP error! status: ${response.status}`;
@@ -331,6 +334,9 @@ export const api = {
       }
       if (response.status === 403) {
         throw new Error("Access denied. Please try again.");
+      }
+      if (response.status === 428) {
+        throw new Error("Profile incomplete. Please complete your profile to continue.");
       }
       
       // Try to extract the specific error message from the response

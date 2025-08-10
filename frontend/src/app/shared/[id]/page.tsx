@@ -391,6 +391,22 @@ export default function SharedAnalogyPage() {
     hasFetchedAnalogy.current = false;
   }, [params.id]);
 
+  const handleGenerateNew = useCallback(async () => {
+    if (!user) {
+      showNotification({
+        title: "Authentication Required",
+        message: "Please log in to generate new analogies.",
+        type: "error",
+        confirmText: "OK",
+      });
+      router.push("/login");
+      return;
+    }
+    
+    // Redirect to dashboard to generate new analogy
+    router.push("/dashboard");
+  }, [user, router, showNotification]);
+
   const handleRegenerateAnalogy = useCallback(async () => {
     if (!analogy || !user) {
       showNotification({
@@ -515,9 +531,7 @@ export default function SharedAnalogyPage() {
     };
   }, [showOverlay]);
 
-  const handleGenerateNew = useCallback(() => {
-    router.push("/");
-  }, [router]);
+
 
   const ExitButton = useCallback(
     ({ onClick }: { onClick: () => void }) => (
@@ -660,12 +674,12 @@ export default function SharedAnalogyPage() {
 
           {/* Regenerate - takes 2 columns */}
           <div
-            onClick={handleRegenerateAnalogy}
+            onClick={user ? handleRegenerateAnalogy : () => router.push('/login')}
             className="cursor-pointer md:col-span-2"
           >
             <BentoGridItemResultsPage
               title="Regenerate"
-              description="Create your own version of this analogy."
+              description={user ? "Create your own version of this analogy." : "Login to create your own version of this analogy."}
               header={<RegenerateSkeleton />}
               icon={<IconRefresh className="h-4 w-4 text-white" />}
             />
@@ -682,11 +696,11 @@ export default function SharedAnalogyPage() {
           <div className="flex flex-wrap items-center justify-center gap-4 my-6">
             {/* Generate New Analogy */}
             <button
-              onClick={handleGenerateNew}
+              onClick={user ? handleGenerateNew : () => router.push('/login')}
               disabled={isRegenerating}
               className="min-w-[240px] px-8 py-4 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              Generate New Analogy
+              {user ? "Generate New Analogy" : "Login to Generate New Analogy"}
             </button>
 
             {/* Stop Regeneration */}

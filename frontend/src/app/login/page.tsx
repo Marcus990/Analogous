@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import Link from "next/link";
 import { IconMail, IconLock, IconArrowRight, IconKey, IconAlertCircle } from "@tabler/icons-react";
 import ConfirmationModal from "@/components/ConfirmationModal";
-import TurnstileCaptcha from "@/components/TurnstileCaptcha";
+import TurnstileCaptcha, { TurnstileCaptchaRef } from "@/components/TurnstileCaptcha";
 import "./page.css";
 
 export default function Login() {
   const router = useRouter();
   const { signIn, resetPassword } = useAuth();
+  const captchaRef = useRef<TurnstileCaptchaRef>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -24,7 +25,6 @@ export default function Login() {
   const [resetCountdown, setResetCountdown] = useState<number>(0);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaError, setCaptchaError] = useState<string | null>(null);
-  const [captchaKey, setCaptchaKey] = useState<string>("turnstile");
 
   // Check if all required fields are filled
   const canSignIn = email.trim() && password.trim() && captchaToken;
@@ -59,13 +59,13 @@ export default function Login() {
       if (signInError) {
         setError(signInError.message);
         // Reset captcha on error
-        setCaptchaToken(null);
+        resetCaptcha();
       } else {
         router.push("/dashboard");
       }
     } catch {
       setError("An unexpected error occurred");
-      setCaptchaToken(null);
+      resetCaptcha();
     } finally {
       setIsLoading(false);
     }
@@ -94,25 +94,36 @@ export default function Login() {
   const handleCaptchaError = (error: string) => {
     setCaptchaToken(null);
     setCaptchaError(error);
-    // Force refresh on error
-    setCaptchaKey(`turnstile-${Date.now()}`);
+    // Don't force refresh - let the component handle retries internally
   };
 
   const handleCaptchaExpire = () => {
     setCaptchaToken(null);
     setCaptchaError("Captcha expired. Please complete the verification again.");
-    // Force refresh on expire
-    setCaptchaKey(`turnstile-${Date.now()}`);
+    // Don't force refresh - let the component handle retries internally
+  };
+
+  const resetCaptcha = () => {
+    captchaRef.current?.reset();
+    setCaptchaToken(null);
+    setCaptchaError(null);
   };
 
   const handleConfirmReset = async () => {
     setError("");
     setSuccess("");
+    setCaptchaError(null); // Clear any previous captcha errors
     setIsResettingPassword(true);
     setShowResetConfirmation(false);
 
     try {
-      const { error: resetError } = await resetPassword(email);
+      if (!captchaToken) {
+        setCaptchaError("Please complete the captcha verification before requesting a password reset.");
+        setIsResettingPassword(false);
+        return;
+      }
+
+      const { error: resetError } = await resetPassword(email, captchaToken);
 
       if (resetError) {
         setError(resetError.message);
@@ -234,7 +245,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={handleForgotPassword}
-                    disabled={isResettingPassword || !email.trim() || resetCountdown > 0}
+                    disabled={isResettingPassword || !email.trim() || !captchaToken || resetCountdown > 0}
                     className="text-xs sm:text-sm text-purple-400 hover:text-purple-300 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-end space-x-1"
                   >
                     {isResettingPassword ? (
@@ -261,7 +272,7 @@ export default function Login() {
             {/* Captcha */}
             <div className="mt-4 sm:mt-6">
               <TurnstileCaptcha
-                key={captchaKey}
+                ref={captchaRef}
                 onVerify={handleCaptchaVerify}
                 onError={handleCaptchaError}
                 onExpire={handleCaptchaExpire}
@@ -273,8 +284,26 @@ export default function Login() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="mt-2 text-center text-xs sm:text-sm text-red-400"
                 >
-                  {captchaError}
+                  <div className="flex flex-col items-center space-y-2">
+                    <span>{captchaError}</span>
+                    <button
+                      onClick={resetCaptcha}
+                      className="text-xs text-purple-400 hover:text-purple-300 underline"
+                    >
+                      Reset Captcha
+                    </button>
+                  </div>
                 </motion.div>
+              )}
+              {!captchaToken && !captchaError && (
+                <div className="mt-2 text-center">
+                  <button
+                    onClick={resetCaptcha}
+                    className="text-xs text-purple-400 hover:text-purple-300 underline"
+                  >
+                    Reset Captcha
+                  </button>
+                </div>
               )}
             </div>
 

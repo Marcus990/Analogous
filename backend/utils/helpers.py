@@ -628,7 +628,8 @@ async def check_username_uniqueness(username: str) -> dict:
 
 async def check_email_uniqueness(email: str) -> dict:
     """
-    Check if an email is unique in the database.
+    Check if an email is unique in both the user_information table and the Supabase Auth system.
+    This prevents conflicts where someone might be verifying an email but hasn't been inserted into user_information yet.
     
     Args:
         email (str): The email to check
@@ -637,11 +638,28 @@ async def check_email_uniqueness(email: str) -> dict:
         dict: Result with 'available' boolean and 'error' message if unavailable
     """
     try:
-        # Check for uniqueness in the database
+        # First check the user_information table
         result = supabase_client.table("user_information").select("email").eq("email", email.lower()).execute()
         
         if result.data and len(result.data) > 0:
             return {"available": False, "error": "An account with this email already exists"}
+        
+        # Then check the Supabase Auth system to see if someone is already verifying this email
+        try:
+            # Try to get user by email from auth system
+            auth_result = supabase_client.auth.admin.list_users()
+            
+            # Check if any user in the auth system has this email (including unverified users)
+            for user in auth_result.users:
+                if user.email and user.email.lower() == email.lower():
+                    # If user exists in auth but not in user_information, they're likely still verifying
+                    return {"available": False, "error": "This email is already being used for account verification"}
+                    
+        except Exception as auth_error:
+            print(f"Error checking auth system for email {email}: {auth_error}")
+            # If we can't check the auth system, we should err on the side of caution
+            # and assume the email might be in use
+            return {"available": False, "error": "Unable to verify email availability. Please try again later."}
         
         return {"available": True, "error": None}
         

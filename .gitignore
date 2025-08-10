@@ -1,3 +1,7 @@
+.cursor
+.cursor/
+.cursor/mcp.json
+
 # Dependencies
 node_modules/
 .pnp/
