@@ -23,6 +23,7 @@ import {
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import LoadingSpinner, { PageSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 import "./page.css";
 
 interface AnalogyData {
@@ -249,8 +250,8 @@ export default function PastAnalogiesPage() {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading your analogies...</p>
+          <PageSpinner className="mx-auto" />
+          <LoadingMessage message="Loading Your Analogies..." />
         </div>
       </div>
     );
@@ -450,7 +451,7 @@ export default function PastAnalogiesPage() {
                             title="Remove analogy from library"
                           >
                             {deletingAnalogy === analogy.id ? (
-                              <div className="w-3 h-3 sm:w-4 sm:h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+                              <LoadingSpinner size="sm" color="red" />
                             ) : (
                               <IconTrash className="w-3 h-3 sm:w-4 sm:h-4" />
                             )}

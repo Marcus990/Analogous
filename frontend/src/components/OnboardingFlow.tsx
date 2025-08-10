@@ -215,7 +215,7 @@ export default function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const contextOption = answers["User Context"] as string | undefined;
   const contextKey = contextOption
-    ? contextOption.includes("Education")
+    ? contextOption.includes("Student")
       ? "Education"
       : contextOption.includes("Business")
       ? "Business"

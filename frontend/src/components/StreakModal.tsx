@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MovingBorderButton } from "./MovingBorder";
 import { BackgroundGradient } from "./BackgroundGradient";
 import { IconX, IconFlame, IconTrophy, IconBrain } from "@tabler/icons-react";
+import { ComponentSpinner, LoadingMessage } from "./LoadingSpinner";
 import { useStreak } from "@/lib/streakContext";
 import { useAuth } from "@/lib/auth";
 import { api } from "@/lib/api";
@@ -254,7 +255,7 @@ export default function StreakModal({
                     >
                       {loadingStreakLogs ? (
                         <div className="h-32 sm:h-48 w-full flex items-center justify-center">
-                          <div className="animate-spin h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-purple-400 rounded-full" />
+                          <ComponentSpinner color="purple" />
                         </div>
                       ) : (
                         <Calendar

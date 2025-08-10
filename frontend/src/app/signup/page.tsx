@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { IconMail, IconLock, IconCheck } from "@tabler/icons-react";
 import TurnstileCaptcha, { TurnstileCaptchaRef } from "@/components/TurnstileCaptcha";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { ButtonSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 import "./page.css";
 
 export default function SignUp() {
@@ -209,7 +210,7 @@ export default function SignUp() {
                 />
                 {emailValidationState.isLoading && (
                   <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-yellow-400"></div>
+                    <ButtonSpinner color="yellow" />
                   </div>
                 )}
                 {isEmailInputDisabled() && (
@@ -395,7 +396,7 @@ export default function SignUp() {
               >
                 {isLoading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
+                    <ButtonSpinner />
                     <span>Creating account...</span>
                   </>
                 ) : (

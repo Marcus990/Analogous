@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import ProfileCompletionGuard from "./ProfileCompletionGuard";
 import { useNotification } from "@/lib/notificationContext";
+import { ComponentSpinner, LoadingMessage } from "./LoadingSpinner";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -47,8 +48,8 @@ export default function ProtectedRoute({
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-300">Loading...</p>
+          <ComponentSpinner className="mx-auto mb-4" />
+          <LoadingMessage message="Loading..." />
         </div>
       </div>
     );
