@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
+import { useNotification } from "@/lib/notificationContext";
 
 interface ProfileCompletionGuardProps {
   children: React.ReactNode;
@@ -15,8 +16,10 @@ export default function ProfileCompletionGuard({
 }: ProfileCompletionGuardProps) {
   const { user, checkProfileCompletion } = useAuth();
   const router = useRouter();
+  const { showNotification } = useNotification();
   const [isChecking, setIsChecking] = useState(true);
   const [shouldRedirect, setShouldRedirect] = useState(false);
+  const [notified, setNotified] = useState(false);
 
   useEffect(() => {
     const checkProfile = async () => {
@@ -30,6 +33,15 @@ export default function ProfileCompletionGuard({
         
         if (!hasProfile || !isComplete) {
           // User needs to complete their profile
+          if (!notified) {
+            showNotification({
+              title: "Complete Your Profile",
+              message: "Please complete your profile before continuing.",
+              type: "error",
+              confirmText: "OK",
+            });
+            setNotified(true);
+          }
           setShouldRedirect(true);
         }
       } catch (error) {
@@ -42,7 +54,7 @@ export default function ProfileCompletionGuard({
     };
 
     checkProfile();
-  }, [user, checkProfileCompletion]);
+  }, [user, checkProfileCompletion, showNotification, notified]);
 
   useEffect(() => {
     if (shouldRedirect && !isChecking) {

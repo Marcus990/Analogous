@@ -5140,14 +5140,13 @@ async def complete_user_profile(request: CompleteUserProfileRequest, user_id: st
             "lifetime_analogies_generated": 0,
             "streak_reset_acknowledged": True,
             "subscription_start_date": None,
-            "renewal_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+            "renewal_date": None,
             "upcoming_plan": "curious",
             "plan_cancelled": False,
             "daily_reset_date": None,
             "daily_analogies_generated": 0,
             "stripe_subscription_id": None,
             "created_at": datetime.now(timezone.utc).isoformat(),
-            "updated_at": datetime.now(timezone.utc).isoformat(),
         }
         
         insert_response = supabase_client.table("user_information").insert(profile_data).execute()
