@@ -1015,11 +1015,11 @@ async def sign_up_user(request: Request, payload: SignUpRequest):
     signup_options = {
         "email": payload.email,
         "password": payload.password,
-        "emailRedirectTo": "https://analogous.app/signupinformation"
     }
     
     if payload.captchaToken:
         signup_options["options"] = {
+            "emailRedirectTo": "https://analogous.app/signupinformation",
             "captchaToken": payload.captchaToken
         }
         print(f"Captcha token provided for signup: {payload.captchaToken[:20]}...")
