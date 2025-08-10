@@ -57,7 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session?.user?.email);
       setUser(session?.user ?? null);
       setLoading(false);
     });
@@ -133,14 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (!hasProfile) {
             // User has no profile - they need to complete signup
-            console.log("User has no profile - redirecting to complete signup");
             // Note: We'll handle the redirect in the component that uses this hook
           } else if (!isComplete) {
             // User has a profile but it's incomplete (generic defaults)
-            console.log("User has incomplete profile - redirecting to complete signup");
             // Note: We'll handle the redirect in the component that uses this hook
-          } else {
-            console.log("User profile is complete");
           }
         } catch (profileError) {
           console.error("Error checking profile completion:", profileError);

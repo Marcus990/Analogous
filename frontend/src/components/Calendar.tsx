@@ -35,12 +35,9 @@ export default function Calendar({
     // The activeStreakDates are already in YYYY-MM-DD format from the backend
     // No need to convert them again
     const dates = activeStreakDates;
-    console.log("Active streak dates:", activeStreakDates);
 
     // Test the date comparison logic - use user's local date
     const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format in user's timezone
-    console.log("Today's date for comparison:", today);
-    console.log("Is today in active dates?", dates.includes(today));
 
     return dates;
   }, [activeStreakDates]);
@@ -57,7 +54,6 @@ export default function Calendar({
 
     // Get today's date in YYYY-MM-DD format for consistent comparison - use user's local date
     const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format in user's timezone
-    console.log("Today's date:", today);
 
     // Generate 6 weeks of calendar days (42 days total)
     for (let i = 0; i < 42; i++) {
@@ -67,12 +63,6 @@ export default function Calendar({
       const isToday = dateString === today;
       const isActiveStreak = activeDates.includes(dateString);
 
-      // Debug logging for today and streak days
-      if (isToday || isActiveStreak) {
-        console.log(
-          `Date ${dateString}: isToday=${isToday}, isActiveStreak=${isActiveStreak}`
-        );
-      }
 
       days.push({
         date,

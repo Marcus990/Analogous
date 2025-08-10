@@ -9,14 +9,10 @@ const getAuthHeaders = async () => {
     "Content-Type": "application/json",
   };
   
-  console.log("getAuthHeaders - Session:", session ? "exists" : "null");
-  console.log("getAuthHeaders - Access token:", session?.access_token ? "exists" : "null");
   
   if (session?.access_token) {
     headers["Authorization"] = `Bearer ${session.access_token}`;
-    console.log("getAuthHeaders - Added Authorization header");
   } else {
-    console.log("getAuthHeaders - No access token found");
   }
   
   return headers;
@@ -140,10 +136,8 @@ export const api = {
       
       try {
         const errorData = await response.json();
-        console.log("Error response data:", errorData);
         if (errorData.detail) {
           errorMessage = errorData.detail;
-          console.log("Using specific error message:", errorMessage);
         }
       } catch (parseError) {
         // If we can't parse the error response, use the generic message
@@ -344,17 +338,14 @@ export const api = {
       
       try {
         const errorData = await response.json();
-        console.log("Regenerate error response data:", errorData);
         if (errorData.detail) {
           errorMessage = errorData.detail;
-          console.log("Using specific regenerate error message:", errorMessage);
         }
       } catch (parseError) {
         // If we can't parse the error response, use the generic message
         console.warn("Could not parse error response:", parseError);
       }
       
-      console.log("Regenerate API throwing error:", errorMessage);
       throw new Error(errorMessage);
     }
 
@@ -484,8 +475,6 @@ export const api = {
     is_public: boolean;
   }> => {
     const headers = await getAuthHeaders();
-    console.log("updateAnalogyPublicStatus - Headers:", headers);
-    console.log("updateAnalogyPublicStatus - Request body:", { is_public: isPublic });
     
     const response = await fetch(`${API_BASE_URL}/analogy/${analogyId}/public`, {
       method: "PATCH",

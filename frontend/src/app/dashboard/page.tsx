@@ -324,7 +324,7 @@ const TypewriterHeading = () => {
 
   return (
     <div className="text-left mb-12">
-      <h1 className="font-bold text-white font-[PlantinMTProSemiBold] text-[1rem] md:text-[2rem] lg:text-[3rem] leading-none">
+      <h1 className="font-bold text-white font-[PlantinMTProSemiBold] text-[1.5rem] md:text-[2rem] lg:text-[3rem] leading-none">
         {currentText}
         <span
           className={`${
@@ -482,18 +482,15 @@ export default function DashboardPage() {
 
     try {
       setLoadingRecentAnalogies(true);
-      console.log("Fetching recent analogies for user:", user.id);
       const response: UserAnalogiesResponse = await api.getUserRecentAnalogies(
         user.id,
         3
       );
-      console.log("API response:", response);
 
       // Store all analogies for potential replacement
       setAllUserAnalogies(response.analogies);
 
       // Get the 3 most recent analogies (they're already the most recent from the API)
-      console.log("Recent analogies:", response.analogies);
       setRecentAnalogies(response.analogies);
     } catch (err) {
       console.error("Error fetching recent analogies:", err);
@@ -567,8 +564,6 @@ export default function DashboardPage() {
 
       // Refresh recent analogies from the database to get the next most recent one
       await refreshAnalogies();
-
-      console.log("Analogy deleted successfully");
     } catch (err) {
       console.error("Error deleting analogy:", err);
       showNotification({
@@ -1038,7 +1033,7 @@ export default function DashboardPage() {
                               <h4 className="text-base sm:text-lg font-bold text-white mb-2 line-clamp-2">
                                 {analogy.analogy_json.title}
                               </h4>
-                              <p className="text-xs sm:text-sm text-gray-400">
+                              <p className="line-clamp-3 text-xs sm:text-sm text-gray-400">
                                 Explain {analogy.topic} like I&apos;m a{" "}
                                 {analogy.audience}
                               </p>

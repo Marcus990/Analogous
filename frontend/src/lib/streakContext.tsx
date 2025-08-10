@@ -92,12 +92,9 @@ export function StreakProvider({ children }: { children: ReactNode }) {
           // Acknowledge the streak reset so it won't show again
           try {
             await api.acknowledgeStreakReset(user.id);
-            console.log("Streak reset acknowledged successfully");
           } catch (error) {
             console.error("Error acknowledging streak reset:", error);
           }
-          
-          console.log("Streak was reset during fetch");
         }
       } catch (error) {
         console.error("Error fetching streak data:", error);

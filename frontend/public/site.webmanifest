@@ -1,0 +1,70 @@
+{
+  "name": "Analogous AI - AI-Powered Analogy Generation for Faster Learning",
+  "short_name": "Analogous AI",
+  "description": "Transform complex topics into simple analogies with AI. Learn faster with AI-powered analogies and understand difficult concepts instantly.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon-precomposed.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/analogousfinallogo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-image.png",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "Analogous AI Homepage"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Create Analogy",
+      "short_name": "New",
+      "description": "Create a new AI-powered analogy",
+      "url": "/dashboard",
+      "icons": [
+        {
+          "src": "/favicon.png",
+          "sizes": "32x32"
+        }
+      ]
+    },
+    {
+      "name": "My Analogies",
+      "short_name": "History",
+      "description": "View your past analogies",
+      "url": "/past-analogies",
+      "icons": [
+        {
+          "src": "/favicon.png",
+          "sizes": "32x32"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
