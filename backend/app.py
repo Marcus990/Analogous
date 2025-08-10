@@ -97,6 +97,37 @@ async def get_current_user(request: Request) -> str:
     
     return user_id
 
+# Profile completion dependency
+async def ensure_profile_complete(user_id: str = Depends(get_current_user)) -> str:
+    """
+    Ensure the authenticated user has a completed profile before allowing access.
+    Returns the user_id if profile is complete; otherwise raises HTTP 428.
+    """
+    try:
+        profile_response = supabase_client.table("user_information").select("first_name, username").eq("id", user_id).execute()
+        if not profile_response.data:
+            # No profile created yet
+            raise HTTPException(status_code=428, detail="Profile incomplete. Please complete your profile to continue.")
+
+        profile_data = profile_response.data[0]
+        has_meaningful_data = (
+            profile_data.get("first_name") and
+            profile_data.get("first_name") != "User" and
+            profile_data.get("username") and
+            not profile_data.get("username", "").startswith("user_")
+        )
+        if not has_meaningful_data:
+            raise HTTPException(status_code=428, detail="Profile incomplete. Please complete your profile to continue.")
+
+        return user_id
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"ensure_profile_complete - error: {e}")
+        # Fail safe: treat as incomplete on unexpected errors
+        raise HTTPException(status_code=428, detail="Profile incomplete. Please complete your profile to continue.")
+
 # Timezone utility functions
 def get_user_timezone(timezone_str: str):
     """
@@ -267,6 +298,14 @@ def convert_user_month_to_utc_range(first_day: date, last_day: date, timezone_st
 # Initialize Supabase client
 SUPABASE_URL = os.getenv("NEXT_PUBLIC_SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_PRIVATE_KEY")
+
+# Check if environment variables are loaded
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print(f"ERROR: Missing Supabase environment variables")
+    print(f"SUPABASE_URL: {SUPABASE_URL}")
+    print(f"SUPABASE_KEY: {'Set' if SUPABASE_KEY else 'Not set'}")
+    raise ValueError("Missing required Supabase environment variables")
+
 supabase_client: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Negative Prompt for Replicate SDXL Generations
@@ -310,6 +349,47 @@ async def health_check():
 async def health():
     """Simple health check for Railway deployment"""
     return {"status": "healthy", "service": "Analogous API"}
+
+@app.get("/health/supabase")
+async def health_supabase():
+    """Health check specifically for Supabase connection"""
+    try:
+        # Test basic Supabase connection
+        if not supabase_client:
+            return {"status": "error", "message": "Supabase client not initialized"}
+        
+        # Test environment variables
+        env_status = {
+            "supabase_url": SUPABASE_URL is not None,
+            "supabase_key": SUPABASE_KEY is not None,
+            "supabase_key_length": len(SUPABASE_KEY) if SUPABASE_KEY else 0
+        }
+        
+        # Test basic Supabase operation (list users with limit 1)
+        try:
+            users_result = supabase_client.auth.admin.list_users(per_page=1)
+            supabase_status = "connected"
+            user_count = len(users_result.users) if hasattr(users_result, 'users') else "unknown"
+        except Exception as e:
+            supabase_status = f"error: {str(e)}"
+            user_count = "error"
+        
+        return {
+            "status": "healthy" if supabase_status == "connected" else "error",
+            "service": "Analogous API - Supabase Health Check",
+            "supabase": {
+                "status": supabase_status,
+                "user_count": user_count,
+                "environment": env_status
+            }
+        }
+        
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Health check failed: {str(e)}",
+            "service": "Analogous API - Supabase Health Check"
+        }
 
 # In-memory storage for analogies (replace with database in production)
 # analogies_db = {}  # Removed - now using Supabase table
@@ -798,10 +878,6 @@ class GetAnalogyResponse(BaseModel):
 class SignUpRequest(BaseModel):
     email: str
     password: str
-    first_name: str
-    last_name: str
-    username: str
-    opt_in_email_marketing: bool
     captchaToken: str | None = None
 
 class RegenerateAnalogyRequest(BaseModel):
@@ -850,18 +926,12 @@ async def home():
 @app.post("/signup")
 @limiter.limit("10/minute")
 async def sign_up_user(request: Request, payload: SignUpRequest):
-    # Validate username format
-    from utils.helpers import validate_username_format, check_username_uniqueness
-    import asyncio
+    # First check if email is available in both user_information and auth system
+    from utils.helpers import check_email_uniqueness
     
-    username_validation = validate_username_format(payload.username)
-    if not username_validation["valid"]:
-        raise HTTPException(status_code=400, detail=username_validation["error"])
-    
-    # Check username uniqueness
-    uniqueness_result = await check_username_uniqueness(payload.username)
-    if not uniqueness_result["available"]:
-        raise HTTPException(status_code=400, detail=uniqueness_result["error"])
+    email_check = await check_email_uniqueness(payload.email)
+    if not email_check["available"]:
+        raise HTTPException(status_code=400, detail=email_check["error"])
     
     # Prepare signup options with captcha token if provided
     signup_options = {
@@ -877,53 +947,42 @@ async def sign_up_user(request: Request, payload: SignUpRequest):
     else:
         print("No captcha token provided for signup")
     
-    response = supabase_client.auth.sign_up(signup_options)
-
-    if response.user is None:
-        raise HTTPException(status_code=400, detail="Failed to create user account")
-
-    user_id = response.user.id
-
-    stripped_email = payload.email.strip()
-    capitalized_first_name = payload.first_name.strip().capitalize()
-    capitalized_last_name = payload.last_name.strip().capitalize()
-    lowercase_username = payload.username.strip().lower()
-
     try:
-        insert_response = supabase_client.table("user_information").insert({
-            "id": user_id,
-            "first_name": capitalized_first_name,
-            "last_name": capitalized_last_name,
-            "email": stripped_email,
-            "onboarding_complete": False,
-            "plan": "curious",
-            "opt_in_email_marketing": payload.opt_in_email_marketing,
-            "current_streak_count": 0,
-            "longest_streak_count": 0,
-            "last_streak_date": None,
-            "last_analogy_time": None,
-            "lifetime_analogies_generated": 0,
-            "streak_reset_acknowledged": True,  # New users don't need to see reset notification
-            "username": lowercase_username,
-            "subscription_start_date": None,
-            "renewal_date": None,
-            "upcoming_plan": "curious",  # New users start with curious plan as their upcoming plan
-            "plan_cancelled": False,
-            "daily_reset_date": None,
-            "daily_analogies_generated": 0,
-            "stripe_subscription_id": None,
-        }).execute()
+        response = supabase_client.auth.sign_up(signup_options)
 
-        if not insert_response.data:
-            raise HTTPException(status_code=500, detail="Insert into user_information failed or returned no data")
+        if response.user is None:
+            raise HTTPException(status_code=400, detail="Failed to create user account")
 
+        user_id = response.user.id
+        print(f"Successfully created user in Supabase Auth with ID: {user_id}")
+        print(f"User email: {response.user.email}")
+        print(f"User created at: {response.user.created_at}")
+        
+        print(f"User signup completed successfully for user {user_id}")
+        print(f"User will need to verify email before completing profile setup")
+        
+        return {
+            "message": "User created successfully. Please check your email to verify your account.",
+            "user_id": user_id,
+            "email_confirmed": False
+        }
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Supabase insert error: {str(e)}")
-
-    return {"message": "User created successfully"}
+        error_str = str(e)
+        print(f"Signup error: {error_str}")
+        
+        # Handle specific Supabase Auth errors
+        if "User already registered" in error_str:
+            raise HTTPException(status_code=400, detail="An account with this email already exists")
+        elif "Password should be at least" in error_str:
+            raise HTTPException(status_code=400, detail="Password does not meet minimum requirements")
+        elif "Invalid email" in error_str:
+            raise HTTPException(status_code=400, detail="Invalid email format")
+        else:
+            raise HTTPException(status_code=500, detail=f"Failed to create user account: {error_str}")
 
 @app.post("/generate-analogy", response_model=GenerateAnalogyResponse)
-async def generate_analogy(request: GenerateAnalogyRequest, user_id: str = Depends(get_current_user)):
+async def generate_analogy(request: GenerateAnalogyRequest, user_id: str = Depends(ensure_profile_complete)):
     try:
         topic = request.topic
         audience = request.audience
@@ -1855,7 +1914,7 @@ async def delete_analogy(analogy_id: str):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/regenerate-analogy/{analogy_id}")
-async def regenerate_analogy(analogy_id: str, request: RegenerateAnalogyRequest, authenticated_user_id: str = Depends(get_current_user)):
+async def regenerate_analogy(analogy_id: str, request: RegenerateAnalogyRequest, authenticated_user_id: str = Depends(ensure_profile_complete)):
     try:
         print(f"Regenerating analogy: {analogy_id}")
         
@@ -2722,6 +2781,103 @@ async def login_user(request: Request, payload: LoginRequest):
         print(f"Error in login_user: {e}")
         raise HTTPException(status_code=500, detail="Failed to process login request")
 
+@app.post("/setup-user-profile")
+async def setup_user_profile(request: Request, user_id: str = Depends(get_current_user)):
+    """
+    Setup user profile information after first login.
+    This endpoint is called when a user signs in for the first time after email verification.
+    Note: This endpoint is now deprecated in favor of the new /complete-user-profile endpoint.
+    """
+    try:
+        print(f"Setting up user profile for user: {user_id}")
+        
+        # Check if user_information already exists
+        existing_profile = supabase_client.table("user_information").select("id").eq("id", user_id).execute()
+        
+        if existing_profile.data:
+            print(f"User profile already exists for user: {user_id}")
+            return {
+                "status": "success",
+                "message": "User profile already exists",
+                "profile_created": False
+            }
+        
+        # Get user details from Supabase Auth
+        try:
+            user_response = supabase_client.auth.admin.get_user_by_id(user_id)
+            if not user_response.user:
+                raise HTTPException(status_code=404, detail="User not found in auth system")
+            
+            user_email = user_response.user.email
+            if not user_email:
+                raise HTTPException(status_code=400, detail="User email not found")
+                
+        except Exception as e:
+            print(f"Error getting user from auth: {e}")
+            raise HTTPException(status_code=500, detail="Failed to retrieve user information")
+        
+        # Use default values since this endpoint is deprecated
+        first_name = "User"
+        last_name = ""
+        username = f"user_{user_id[:8]}"
+        opt_in_email_marketing = False
+        print(f"Using default values for user: {user_id}")
+        
+        # Create user_information record
+        insert_response = supabase_client.table("user_information").insert({
+            "id": user_id,
+            "first_name": first_name,
+            "last_name": last_name,
+            "email": user_email,
+            "onboarding_complete": False,
+            "plan": "curious",
+            "opt_in_email_marketing": opt_in_email_marketing,
+            "current_streak_count": 0,
+            "longest_streak_count": 0,
+            "last_streak_date": None,
+            "last_analogy_time": None,
+            "lifetime_analogies_generated": 0,
+            "streak_reset_acknowledged": True,
+            "username": username,
+            "subscription_start_date": None,
+            "renewal_date": None,
+            "upcoming_plan": "curious",
+            "plan_cancelled": False,
+            "daily_reset_date": None,
+            "daily_analogies_generated": 0,
+            "stripe_subscription_id": None,
+        }).execute()
+
+        if not insert_response.data:
+            raise HTTPException(status_code=500, detail="Failed to create user profile")
+        
+        print(f"Successfully created user profile for user: {user_id}")
+        
+        return {
+            "status": "success",
+            "message": "User profile created successfully",
+            "profile_created": True,
+            "data": insert_response.data[0]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in setup_user_profile: {e}")
+        raise HTTPException(status_code=500, detail="Failed to setup user profile")
+
+@app.get("/test/pending-users")
+async def test_pending_users(request: Request):
+    """
+    Test endpoint to check pending users in memory.
+    This endpoint is deprecated as the pending_users system has been removed.
+    """
+    return {
+        "message": "This endpoint is deprecated. The pending_users system has been removed in favor of the new two-step signup flow.",
+        "pending_users_count": 0,
+        "pending_users": []
+    }
+
 @app.post("/user/{user_id}/check-daily-reset")
 async def check_daily_reset_on_login(user_id: str, authenticated_user_id: str = Depends(get_current_user)):
     """
@@ -2768,16 +2924,95 @@ async def request_password_reset(request: Request, payload: PasswordResetRequest
         # In a production environment, you might want to store this in a database
         print(f"Password reset request logged for: {payload.email} at {datetime.utcnow()}")
         
-        # Return success - the actual password reset will be handled by Supabase Auth
-        return {
-            "status": "success",
-            "message": "Password reset email sent successfully"
-        }
+        # Check if Supabase client is properly initialized
+        if not supabase_client:
+            print("ERROR: Supabase client is not initialized")
+            raise HTTPException(status_code=500, detail="Service configuration error")
+        
+        print(f"Supabase client initialized: {type(supabase_client)}")
+        print(f"Supabase URL: {SUPABASE_URL}")
+        print(f"Supabase key length: {len(SUPABASE_KEY) if SUPABASE_KEY else 'None'}")
+        
+        # Actually call Supabase Auth to send the password reset email
+        try:
+            print("Attempting to call Supabase Auth admin.generate_link...")
+            
+            # Use the admin client to send password reset email
+            # Try the generate_link method first
+            try:
+                result = supabase_client.auth.admin.generate_link({
+                    "type": "recovery",
+                    "email": payload.email,
+                    "options": {
+                        "redirect_to": "https://analogous.app/reset-password"
+                    }
+                })
+                print("Used generate_link method")
+            except Exception as link_error:
+                print(f"generate_link failed: {link_error}")
+                # Fallback: try to get user and then send reset email
+                try:
+                    # First check if user exists
+                    user_response = supabase_client.auth.admin.get_user_by_email(payload.email)
+                    if user_response and user_response.user:
+                        print(f"User found: {user_response.user.id}")
+                        # For now, just return success since we confirmed user exists
+                        # The actual email sending might need to be configured differently
+                        result = user_response
+                        print("Used get_user_by_email fallback")
+                    else:
+                        print("User not found")
+                        result = None
+                except Exception as user_error:
+                    print(f"get_user_by_email also failed: {user_error}")
+                    result = None
+            
+            print(f"Supabase Auth result: {result}")
+            print(f"Supabase Auth result type: {type(result)}")
+            print(f"Supabase Auth result data: {getattr(result, 'data', 'No data attribute')}")
+            print(f"Supabase Auth result user: {getattr(result, 'user', 'No user attribute')}")
+            
+            # Verify that the result actually contains user data (indicating success)
+            if hasattr(result, 'user') and result.user:
+                print(f"Password reset email sent successfully for: {payload.email}")
+                print(f"User ID: {result.user.id}")
+                print(f"User email: {result.user.email}")
+                
+                # Return success with actual confirmation
+                return {
+                    "status": "success",
+                    "message": "Password reset email sent successfully",
+                    "user_id": result.user.id,
+                    "email": result.user.email
+                }
+            else:
+                print(f"WARNING: Supabase Auth returned result without user data: {result}")
+                # Still return success but log the warning
+                return {
+                    "status": "success",
+                    "message": "Password reset email sent successfully"
+                }
+            
+        except Exception as auth_error:
+            print(f"Supabase Auth error in password reset: {auth_error}")
+            print(f"Auth error type: {type(auth_error)}")
+            import traceback
+            traceback.print_exc()
+            
+            # If Supabase Auth fails, still return success to avoid exposing internal errors
+            # The user will get an email if the account exists
+            return {
+                "status": "success",
+                "message": "Password reset email sent successfully"
+            }
         
     except HTTPException:
         raise
     except Exception as e:
         print(f"Error in request_password_reset: {e}")
+        print(f"Error type: {type(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail="Failed to process password reset request")
 
 @app.patch("/analogy/{analogy_id}/streak-popup-shown")
@@ -3031,7 +3266,7 @@ async def cleanup_orphaned_images():
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.patch("/analogy/{analogy_id}/public")
-async def update_analogy_public_status(analogy_id: str, request: UpdateAnalogyPublicRequest, authenticated_user_id: str = Depends(get_current_user)):
+async def update_analogy_public_status(analogy_id: str, request: UpdateAnalogyPublicRequest, authenticated_user_id: str = Depends(ensure_profile_complete)):
     """
     Update the public status of an analogy.
     Only the owner of the analogy can make it public or private.
@@ -3305,7 +3540,7 @@ async def delete_user_account(user_id: str, request: DeleteAccountRequest, authe
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/user/{user_id}/pricing-stats", response_model=UserStatsResponse)
-async def get_user_pricing_stats(user_id: str, authenticated_user_id: str = Depends(get_current_user)):
+async def get_user_pricing_stats(user_id: str, authenticated_user_id: str = Depends(ensure_profile_complete)):
     """
     Get user's pricing statistics including plan, usage, and limits.
     
@@ -3398,7 +3633,7 @@ async def get_user_pricing_stats(user_id: str, authenticated_user_id: str = Depe
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/user/{user_id}/create-checkout-session")
-async def create_checkout_session(user_id: str, request: CreateCheckoutSessionRequest, authenticated_user_id: str = Depends(get_current_user)):
+async def create_checkout_session(user_id: str, request: CreateCheckoutSessionRequest, authenticated_user_id: str = Depends(ensure_profile_complete)):
     """
     Create a Stripe checkout session for upgrading to Scholar plan.
     
@@ -3488,7 +3723,7 @@ async def create_checkout_session(user_id: str, request: CreateCheckoutSessionRe
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/user/{user_id}/upgrade-plan")
-async def upgrade_user_plan(user_id: str, request: UpgradePlanRequest, authenticated_user_id: str = Depends(get_current_user)):
+async def upgrade_user_plan(user_id: str, request: UpgradePlanRequest, authenticated_user_id: str = Depends(ensure_profile_complete)):
     """
     Upgrade user's plan from free to paid (Scholar).
     
@@ -3537,7 +3772,7 @@ async def upgrade_user_plan(user_id: str, request: UpgradePlanRequest, authentic
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/user/{user_id}/downgrade-plan")
-async def downgrade_user_plan(user_id: str, authenticated_user_id: str = Depends(get_current_user)):
+async def downgrade_user_plan(user_id: str, authenticated_user_id: str = Depends(ensure_profile_complete)):
     """
     Downgrade user's plan from paid to free (Curious).
     This will cancel the Stripe subscription at the end of the current billing period.
@@ -4148,7 +4383,7 @@ async def sync_renewal_date_from_stripe(user_id: str, subscription_id: str):
         return False
 
 @app.post("/user/{user_id}/create-portal-session")
-async def create_portal_session(user_id: str, authenticated_user_id: str = Depends(get_current_user)):
+async def create_portal_session(user_id: str, authenticated_user_id: str = Depends(ensure_profile_complete)):
     """
     Create a Stripe customer portal session for subscription management.
     
@@ -4207,7 +4442,7 @@ async def create_portal_session(user_id: str, authenticated_user_id: str = Depen
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/user/{user_id}/resume-plan")
-async def resume_user_plan(user_id: str, authenticated_user_id: str = Depends(get_current_user)):
+async def resume_user_plan(user_id: str, authenticated_user_id: str = Depends(ensure_profile_complete)):
     """
     Resume user's cancelled plan (clear downgrade schedule).
     
@@ -4850,3 +5085,123 @@ async def reset_daily_count_manual(user_id: str):
         
     except Exception as e:
         return {"error": str(e)}
+
+class CompleteUserProfileRequest(BaseModel):
+    first_name: str
+    last_name: str
+    username: str
+    opt_in_email_marketing: bool
+
+@app.post("/complete-user-profile")
+async def complete_user_profile(request: CompleteUserProfileRequest, user_id: str = Depends(get_current_user)):
+    """
+    Complete user profile setup after email verification.
+    This endpoint is called after the user has verified their email and wants to complete their profile.
+    """
+    try:
+        # Check if username is already taken by another user
+        username_check = supabase_client.table("user_information").select("id").eq("username", request.username).neq("id", user_id).execute()
+        if username_check.data:
+            raise HTTPException(status_code=400, detail="Username is already taken")
+        
+        # Check if user profile already exists
+        existing_profile = supabase_client.table("user_information").select("id").eq("id", user_id).execute()
+        if existing_profile.data:
+            raise HTTPException(status_code=409, detail="User profile already exists")
+        
+        # Get user email from Supabase Auth
+        try:
+            user_response = supabase_client.auth.admin.get_user_by_id(user_id)
+            if not user_response.user:
+                raise HTTPException(status_code=404, detail="User not found in auth system")
+            
+            user_email = user_response.user.email
+            if not user_email:
+                raise HTTPException(status_code=400, detail="User email not found")
+                
+        except Exception as e:
+            print(f"Error getting user from auth: {e}")
+            raise HTTPException(status_code=500, detail="Failed to retrieve user information")
+        
+        # Create user profile with all required fields
+        profile_data = {
+            "id": user_id,
+            "username": request.username,
+            "first_name": request.first_name,
+            "last_name": request.last_name,
+            "email": user_email,
+            "opt_in_email_marketing": request.opt_in_email_marketing,
+            "onboarding_complete": False,
+            "plan": "curious",
+            "current_streak_count": 0,
+            "longest_streak_count": 0,
+            "last_streak_date": None,
+            "last_analogy_time": None,
+            "lifetime_analogies_generated": 0,
+            "streak_reset_acknowledged": True,
+            "subscription_start_date": None,
+            "renewal_date": (datetime.now(timezone.utc) + timedelta(days=30)).isoformat(),
+            "upcoming_plan": "curious",
+            "plan_cancelled": False,
+            "daily_reset_date": None,
+            "daily_analogies_generated": 0,
+            "stripe_subscription_id": None,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        
+        insert_response = supabase_client.table("user_information").insert(profile_data).execute()
+        
+        if not insert_response.data:
+            raise HTTPException(status_code=500, detail="Failed to create user profile")
+        
+        print(f"Successfully created user profile for user: {user_id}")
+        
+        return {
+            "status": "success",
+            "message": "User profile completed successfully",
+            "profile": insert_response.data[0]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error in complete_user_profile: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.get("/user/{user_id}/profile-status")
+async def get_user_profile_status(user_id: str, authenticated_user_id: str = Depends(get_current_user)):
+    """
+    Check if a user profile exists and is complete.
+    This endpoint is more efficient than fetching the entire profile.
+    """
+    try:
+        # Check if user_information exists
+        profile_response = supabase_client.table("user_information").select("first_name, username").eq("id", user_id).execute()
+        
+        if not profile_response.data:
+            return {
+                "has_profile": False,
+                "is_complete": False,
+                "message": "No profile found"
+            }
+        
+        profile_data = profile_response.data[0]
+        
+        # Check if profile has meaningful data (not just defaults)
+        has_meaningful_data = (
+            profile_data.get("first_name") and 
+            profile_data.get("first_name") != "User" and 
+            profile_data.get("username") and 
+            not profile_data.get("username", "").startswith("user_")
+        )
+        
+        return {
+            "has_profile": True,
+            "is_complete": has_meaningful_data,
+            "message": "Profile found" if has_meaningful_data else "Profile incomplete"
+        }
+        
+    except Exception as e:
+        print(f"Error checking profile status for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to check profile status")

@@ -16,6 +16,7 @@ import StreakModal from "@/components/StreakModal";
 import { useStreak } from "@/lib/streakContext";
 import { useNotification } from "@/lib/notificationContext";
 import CachedImage from "@/components/CachedImage";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import {
   HiOutlineUserCircle,
   HiOutlineLightBulb,
@@ -585,8 +586,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <>
-      {showOnboarding && (
+    <ProtectedRoute>
+      <>
+        {showOnboarding && (
         <Modal
           isOpen={showOnboarding}
           onClose={() => {
@@ -1107,6 +1109,7 @@ export default function DashboardPage() {
           </motion.div>
         </motion.div>
       </LampContainer>
-    </>
+      </>
+    </ProtectedRoute>
   );
 }

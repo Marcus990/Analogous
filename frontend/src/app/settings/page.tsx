@@ -13,6 +13,7 @@ import { useNotification } from "@/lib/notificationContext";
 import { useUsernameValidation } from "@/lib/useUsernameValidation";
 import { useRateLimit } from "@/lib/useRateLimit";
 import { validatePassword, getPasswordValidationMessage } from "@/lib/passwordValidation";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import {
   IconUser,
   IconLock,
@@ -378,8 +379,9 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
+    <ProtectedRoute>
+      <div className="min-h-screen bg-black text-white">
+        {/* Header */}
       <div className="relative z-10 top-6">
         <div className="relative z-20 px-4 sm:px-6 py-6 sm:py-8 max-w-6xl mx-auto">
           {/* Navigation */}
@@ -887,6 +889,7 @@ export default function SettingsPage() {
         type="danger"
         icon={<IconTrash size={24} />}
       />
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 } 

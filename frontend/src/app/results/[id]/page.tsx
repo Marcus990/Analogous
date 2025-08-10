@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useStreak } from "@/lib/streakContext";
 import { useNotification } from "@/lib/notificationContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import "../page.css";
 
 export default function ResultsPage() {
@@ -587,6 +588,15 @@ export default function ResultsPage() {
         });
         // Redirect to login page
         router.push("/login");
+      } else if (error instanceof Error && error.message.includes("Profile incomplete")) {
+        console.error("Profile incomplete:", error);
+        showNotification({
+          title: "Complete Your Profile",
+          message: "Please complete your profile before regenerating an analogy.",
+          type: "error",
+          confirmText: "OK",
+        });
+        router.push("/signupinformation");
       } else if (error instanceof Error && error.message.includes("Access denied")) {
         console.error("Authorization error:", error);
         showNotification({
@@ -698,8 +708,9 @@ export default function ResultsPage() {
   ) as Record<string, string>;
 
   return (
-    <div className="min-h-screen bg-black text-white flex justify-center items-center px-4">
-      <StreakModal
+    <ProtectedRoute>
+      <div className="min-h-screen bg-black text-white flex justify-center items-center px-4">
+        <StreakModal
         isOpen={showStreakModal}
         onClose={handleStreakModalClose}
         isNewStreak={true}
@@ -1376,6 +1387,7 @@ export default function ResultsPage() {
           </motion.div>
         )}
       </div>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }

@@ -256,6 +256,17 @@ export default function Home() {
             ? error.message
             : "Failed to generate analogy. Please try again.";
 
+        if (error instanceof Error && error.message.includes("Profile incomplete")) {
+          showNotification({
+            title: "Complete Your Profile",
+            message: "Please complete your profile before generating an analogy.",
+            type: "error",
+            confirmText: "OK",
+          });
+          router.push("/signupinformation");
+          return;
+        }
+
         showNotification({
           title: "Generation Failed",
           message: errorMessage,

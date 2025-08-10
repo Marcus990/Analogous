@@ -10,6 +10,7 @@ import PricingPlans from "@/components/PricingPlans";
 import { useNotification } from "@/lib/notificationContext";
 import { MovingBorderButton } from "@/components/MovingBorder";
 import { redirectToCheckout, redirectToPortal } from "@/lib/stripe";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import {
   IconArrowLeft,
   IconSchool,
@@ -329,8 +330,9 @@ export default function PrivatePricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="relative z-10 pt-20 sm:pt-24 md:pt-32 px-4 sm:px-6 md:px-10 lg:px-24 pb-8 sm:pb-12">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-black text-white">
+        <div className="relative z-10 pt-20 sm:pt-24 md:pt-32 px-4 sm:px-6 md:px-10 lg:px-24 pb-8 sm:pb-12">
         <motion.div
           className="space-y-15 sm:space-y-20"
           initial="hidden"
@@ -1265,6 +1267,7 @@ export default function PrivatePricingPage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
