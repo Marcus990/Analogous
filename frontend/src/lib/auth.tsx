@@ -259,8 +259,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const resetPassword = async (email: string, captchaToken?: string) => {
     try {
       const redirectUrl = typeof window !== "undefined"
-        ? `${window.location.origin}/auth/callback?next=/reset-password`
-        : `${process.env.NEXT_PUBLIC_SITE_URL || "https://analogous.app"}/auth/callback?next=/reset-password`;
+        ? `${window.location.origin}/reset-password`
+        : `${process.env.NEXT_PUBLIC_API_URL || "https://analogous.app"}/reset-password`;
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
