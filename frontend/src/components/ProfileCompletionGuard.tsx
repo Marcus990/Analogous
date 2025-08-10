@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { useNotification } from "@/lib/notificationContext";
+import { ComponentSpinner, LoadingMessage } from "./LoadingSpinner";
 
 interface ProfileCompletionGuardProps {
   children: React.ReactNode;
@@ -67,8 +68,8 @@ export default function ProfileCompletionGuard({
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-300">Checking profile completion...</p>
+          <ComponentSpinner className="mx-auto mb-4" />
+          <LoadingMessage message="Checking Profile Completion..." />
         </div>
       </div>
     );
@@ -79,8 +80,8 @@ export default function ProfileCompletionGuard({
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto mb-4"></div>
-          <p className="text-gray-300">Redirecting to complete your profile...</p>
+          <ComponentSpinner className="mx-auto mb-4" />
+          <LoadingMessage message="Redirecting to Complete Your Profile..." />
         </div>
       </div>
     );

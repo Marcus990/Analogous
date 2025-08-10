@@ -8,6 +8,7 @@ import Link from "next/link";
 import { IconMail, IconLock, IconArrowRight, IconKey, IconAlertCircle } from "@tabler/icons-react";
 import ConfirmationModal from "@/components/ConfirmationModal";
 import TurnstileCaptcha, { TurnstileCaptchaRef } from "@/components/TurnstileCaptcha";
+import { ButtonSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 import "./page.css";
 
 export default function Login() {
@@ -250,7 +251,7 @@ export default function Login() {
                   >
                     {isResettingPassword ? (
                       <>
-                        <div className="animate-spin rounded-full h-2.5 w-2.5 sm:h-3 sm:w-3 border-b-2 border-purple-400"></div>
+                        <ButtonSpinner color="purple" />
                         <span>Sending...</span>
                       </>
                     ) : resetCountdown > 0 ? (
@@ -321,7 +322,7 @@ export default function Login() {
               >
                 {isLoading ? (
                   <>
-                    <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
+                                            <ButtonSpinner />
                     <span>Signing in...</span>
                   </>
                 ) : (

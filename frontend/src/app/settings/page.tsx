@@ -13,6 +13,7 @@ import { useNotification } from "@/lib/notificationContext";
 import { useUsernameValidation } from "@/lib/useUsernameValidation";
 import { useRateLimit } from "@/lib/useRateLimit";
 import { validatePassword, getPasswordValidationMessage } from "@/lib/passwordValidation";
+import { ComponentSpinner, ButtonSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import {
   IconUser,
@@ -379,7 +380,10 @@ export default function SettingsPage() {
   if (loading || loadingProfile) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+        <div className="text-center">
+          <ComponentSpinner className="mx-auto mb-4" />
+          <LoadingMessage message="Loading Settings..." />
+        </div>
       </div>
     );
   }
@@ -593,7 +597,7 @@ export default function SettingsPage() {
                       />
                       {usernameValidationState.isLoading && (
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-yellow-400"></div>
+                          <ButtonSpinner color="yellow" />
                         </div>
                       )}
                       {isUsernameInputDisabled() && (
@@ -669,7 +673,7 @@ export default function SettingsPage() {
                   >
                     {saving ? (
                       <>
-                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
+                        <ButtonSpinner />
                         <span>Saving Changes...</span>
                       </>
                     ) : (
@@ -797,7 +801,7 @@ export default function SettingsPage() {
                   >
                     {changingPassword ? (
                       <>
-                        <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
+                        <ButtonSpinner />
                         <span>Updating Password...</span>
                       </>
                     ) : (

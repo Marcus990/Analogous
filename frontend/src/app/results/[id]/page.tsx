@@ -26,6 +26,7 @@ import { useAuth } from "@/lib/auth";
 import { useStreak } from "@/lib/streakContext";
 import { useNotification } from "@/lib/notificationContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import LoadingSpinner, { PageSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 import "../page.css";
 
 export default function ResultsPage() {
@@ -658,10 +659,10 @@ export default function ResultsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-400">
-            {authLoading ? "Loading authentication..." : "Loading your analogy..."}
-          </p>
+          <PageSpinner className="mx-auto" />
+          <LoadingMessage 
+            message={authLoading ? "Loading Authentication..." : "Loading Your Analogy..."} 
+          />
         </div>
       </div>
     );
@@ -1356,7 +1357,7 @@ export default function ResultsPage() {
             >
               {isRegenerating ? (
                 <div className="flex items-center justify-center space-x-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <LoadingSpinner size="sm" color="white" />
                   <span>Regenerating...</span>
                 </div>
               ) : (

@@ -10,6 +10,7 @@ import { useNotification } from "@/lib/notificationContext";
 import { IconUser, IconCheck, IconArrowRight, IconArrowLeft, IconMail } from "@tabler/icons-react";
 import TurnstileCaptcha, { TurnstileCaptchaRef } from "@/components/TurnstileCaptcha";
 import ConfirmationModal from "@/components/ConfirmationModal";
+import { ButtonSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 import "./page.css";
 
 type Step = 1 | 2;
@@ -287,7 +288,7 @@ export default function SignUpInformation() {
                       />
                       {validationState.isLoading && (
                         <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-yellow-400"></div>
+                          <ButtonSpinner color="yellow" />
                         </div>
                       )}
                       {isInputDisabled() && (
@@ -380,7 +381,7 @@ export default function SignUpInformation() {
                     >
                       {isLoading ? (
                         <>
-                          <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:h-4 border-b-2 border-white"></div>
+                          <ButtonSpinner />
                           <span>Completing profile...</span>
                         </>
                       ) : (

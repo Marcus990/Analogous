@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { MovingBorderButton } from "@/components/MovingBorder";
 import { redirectToCheckout } from "@/lib/stripe";
+import { PageSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 import {
   IconArrowLeft,
   IconSchool,
@@ -63,7 +64,10 @@ export default function PublicPricingPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+        <div className="text-center">
+          <PageSpinner color="purple" />
+          <LoadingMessage message="Loading Pricing..." />
+        </div>
       </div>
     );
   }

@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { IconX, IconAlertCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { MovingBorderButton } from './MovingBorder';
 import { BackgroundGradient } from './BackgroundGradient';
+import { ButtonSpinner, LoadingMessage } from './LoadingSpinner';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -137,7 +138,7 @@ export default function ConfirmationModal({
                       disabled={isLoading}
                     >
                       {isLoading && (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <ButtonSpinner />
                       )}
                       <span>{confirmText}</span>
                     </MovingBorderButton>

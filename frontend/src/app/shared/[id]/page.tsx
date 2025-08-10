@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useStreak } from "@/lib/streakContext";
 import { useNotification } from "@/lib/notificationContext";
+import { PageSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 import "../page.css";
 
 export default function SharedAnalogyPage() {
@@ -551,8 +552,8 @@ export default function SharedAnalogyPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500 mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading shared analogy...</p>
+          <PageSpinner className="mx-auto" />
+          <LoadingMessage message="Loading Shared Analogy..." />
         </div>
       </div>
     );
