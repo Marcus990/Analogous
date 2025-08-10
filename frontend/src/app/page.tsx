@@ -174,6 +174,12 @@ export default function Home() {
 
     // Check if user is authenticated
     if (!user) {
+      showNotification({
+        title: "Authentication Required",
+        message: "Please log in to generate analogies.",
+        type: "error",
+        confirmText: "OK",
+      });
       router.push("/login");
       return;
     }
@@ -267,10 +273,11 @@ export default function Home() {
           return;
         }
 
+        const isSafety = /blocked by Gemini|inappropriate|override safety|policy/i.test(errorMessage);
         showNotification({
-          title: "Generation Failed",
+          title: isSafety ? "Safety Warning" : "Generation Failed",
           message: errorMessage,
-          type: "error",
+          type: isSafety ? "warning" : "error",
           confirmText: "OK",
         });
       }

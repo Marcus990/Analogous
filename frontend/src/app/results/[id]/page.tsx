@@ -617,10 +617,11 @@ export default function ResultsPage() {
         
         console.log("Final error message to display:", errorMessage);
         
+        const isSafety = /blocked by Gemini|inappropriate|override safety|policy/i.test(errorMessage);
         showNotification({
-          title: "Regeneration Failed",
+          title: isSafety ? "Safety Warning" : "Regeneration Failed",
           message: errorMessage,
-          type: "error",
+          type: isSafety ? "warning" : "error",
           confirmText: "OK",
         });
       }
@@ -1342,7 +1343,7 @@ export default function ResultsPage() {
             <button
               onClick={handleGenerateNew}
               disabled={isRegenerating}
-              className="min-w-[240px] px-8 py-4 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="min-w-[240px] px-8 py-5 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               Generate New Analogy
             </button>
@@ -1351,7 +1352,7 @@ export default function ResultsPage() {
             <button
               onClick={handleRegenerateAnalogy}
               disabled={isRegenerating}
-              className="min-w-[240px] px-8 py-4 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="min-w-[240px] px-8 py-5 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {isRegenerating ? (
                 <div className="flex items-center justify-center space-x-2">
@@ -1367,7 +1368,7 @@ export default function ResultsPage() {
             {isRegenerating && (
               <button
                 onClick={handleStopRegeneration}
-                className="w-12 h-12 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
+                className="w-14 h-14 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
                 title="Stop Regeneration"
               >
                 <IconSquare className="w-5 h-5" />

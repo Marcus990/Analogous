@@ -247,7 +247,7 @@ export default function Navigation() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700/80 text-white transition-all duration-200 backdrop-blur-sm border border-gray-700/50"
+                  className="p-2 rounded-lg bg-black-800/80 hover:bg-black-700/80 text-white transition-all duration-200 backdrop-blur-sm border border-gray-700/50"
                 >
                   {isMobileMenuOpen ? (
                     <IconX className="w-5 h-5" />
@@ -268,7 +268,7 @@ export default function Navigation() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] md:hidden"
+            className="fixed inset-0 bg-black z-[60] md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <motion.div
@@ -276,7 +276,7 @@ export default function Navigation() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="absolute right-0 top-0 h-full w-80 bg-gray-900/95 backdrop-blur-md border-l border-gray-700/50 p-6"
+              className="absolute right-0 top-0 h-full w-80 bg-black-900/95 backdrop-blur-md border-l border-gray-700/50 p-6"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Close Button */}
@@ -285,7 +285,7 @@ export default function Navigation() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2 rounded-lg bg-gray-800/80 hover:bg-gray-700/80 text-white transition-all duration-200 backdrop-blur-sm border border-gray-700/50"
+                  className="p-2 rounded-lg bg-black-800/80 hover:bg-black-700/80 text-white transition-all duration-200 backdrop-blur-sm border border-gray-700/50"
                 >
                   <IconX className="w-5 h-5" />
                 </motion.button>
@@ -299,7 +299,7 @@ export default function Navigation() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={handleStreakClick}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg bg-gray-800/80 hover:bg-gray-700/80 text-white transition-all duration-200"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg bg-black-800/80 hover:bg-black-700/80 text-white transition-all duration-200"
                       disabled={loadingStreak}
                     >
                       <IconFlame

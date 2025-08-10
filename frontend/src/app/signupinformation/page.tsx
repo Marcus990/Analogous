@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { useUsernameValidation } from "@/lib/useUsernameValidation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useNotification } from "@/lib/notificationContext";
 import { IconUser, IconCheck, IconArrowRight, IconArrowLeft, IconMail } from "@tabler/icons-react";
 import TurnstileCaptcha, { TurnstileCaptchaRef } from "@/components/TurnstileCaptcha";
 import ConfirmationModal from "@/components/ConfirmationModal";
@@ -16,6 +17,7 @@ type Step = 1 | 2;
 export default function SignUpInformation() {
   const { user, completeUserProfile } = useAuth();
   const router = useRouter();
+  const { showNotification } = useNotification();
   const captchaRef = useRef<TurnstileCaptchaRef>(null);
 
   const [currentStep, setCurrentStep] = useState<Step>(1);
@@ -48,6 +50,12 @@ export default function SignUpInformation() {
   // Check if user is authenticated
   useEffect(() => {
     if (!user) {
+      showNotification({
+        title: "Authentication Required",
+        message: "Please log in to continue.",
+        type: "error",
+        confirmText: "OK",
+      });
       router.push('/login');
     }
   }, [user, router]);

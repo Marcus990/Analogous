@@ -26,17 +26,34 @@
   filter: brightness(1.5);
 }
 
+/* Flickering animations - only enabled on larger screens */
 .flicker-slow {
-  animation: flicker 3s linear infinite;
+  animation: none; /* Disabled by default on mobile */
 }
 
 .flicker-medium {
-  animation: flicker 2s linear infinite;
+  animation: none; /* Disabled by default on mobile */
 }
 
 .flicker-fast {
-  animation: flicker 1s linear infinite;
+  animation: none; /* Disabled by default on mobile */
 }
+
+/* Enable flickering on medium screens and above (laptop+) */
+@media (min-width: 768px) {
+  .flicker-slow {
+    animation: flicker 3s linear infinite;
+  }
+
+  .flicker-medium {
+    animation: flicker 2s linear infinite;
+  }
+
+  .flicker-fast {
+    animation: flicker 1s linear infinite;
+  }
+}
+
 @keyframes flicker {
   0%,
   19.999%,
