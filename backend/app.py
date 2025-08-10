@@ -1017,7 +1017,7 @@ async def sign_up_user(request: Request, payload: SignUpRequest):
         "password": payload.password,
     }
 
-    options = {"email_redirect_to": "https://analogous.app/signupinformation"}
+    options = {"email_redirect_to": "https://analogous.app/auth/callback?next=/signupinformation"}
 
     if payload.captchaToken:
         options["captcha_token"] = payload.captchaToken
@@ -3043,7 +3043,7 @@ async def request_password_reset(request: Request, payload: PasswordResetRequest
                     "type": "recovery",
                     "email": payload.email,
                     "options": {
-                        "redirect_to": "https://analogous.app/reset-password"
+                        "redirect_to": "https://analogous.app/auth/callback?next=/reset-password"
                     }
                 })
                 print("Used generate_link method")
