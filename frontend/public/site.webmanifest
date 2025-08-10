@@ -1,7 +1,7 @@
 {
   "name": "Analogous AI - AI-Powered Analogy Generation for Faster Learning",
   "short_name": "Analogous AI",
-  "description": "Transform complex topics into simple analogies with AI. Learn faster with AI-powered analogies and understand difficult concepts instantly.",
+  "description": "Create clear, relatable analogies with AI. Transform complex topics into simple explanations for faster learning and better comprehension.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
@@ -9,7 +9,7 @@
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["education", "productivity", "utilities"],
+  "categories": ["education", "productivity", "utilities", "artificial intelligence"],
   "icons": [
     {
       "src": "/favicon.png",
@@ -18,7 +18,7 @@
       "purpose": "any maskable"
     },
     {
-      "src": "/apple-touch-icon-precomposed.png",
+      "src": "/apple-touch-icon.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any maskable"
@@ -34,7 +34,7 @@
     {
       "src": "/og-image.png",
       "sizes": "1200x630",
-      "type": "image/jpeg",
+      "type": "image/png",
       "form_factor": "wide",
       "label": "Analogous AI Homepage"
     }
@@ -43,7 +43,7 @@
     {
       "name": "Create Analogy",
       "short_name": "New",
-      "description": "Create a new AI-powered analogy",
+      "description": "Create a new AI-powered analogy instantly.",
       "url": "/dashboard",
       "icons": [
         {
@@ -55,7 +55,7 @@
     {
       "name": "My Analogies",
       "short_name": "History",
-      "description": "View your past analogies",
+      "description": "View your saved AI-generated analogies.",
       "url": "/past-analogies",
       "icons": [
         {
