@@ -184,7 +184,6 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
   };
 
   const handleImageLoad = (event: React.SyntheticEvent<HTMLImageElement>) => {
-    console.log(`Successfully loaded image: ${event.currentTarget.src}`);
     try {
       const img = event.currentTarget;
       const canvas = document.createElement("canvas");
@@ -259,10 +258,6 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
     const backendUrl =
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const fullFallbackUrl = `${backendUrl}${fallbackImage}`;
-
-    console.log(
-      `Using fallback for title page image ${imgIndex}: ${fullFallbackUrl}`
-    );
     event.currentTarget.src = fullFallbackUrl;
   };
 
@@ -318,11 +313,6 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                       src={slide.background_image}
                       alt="Comic background"
                       className="w-full h-full object-cover"
-                      onLoad={() => {
-                        console.log(
-                          `Successfully loaded background image: ${slide.background_image}`
-                        );
-                      }}
                       onError={(e) => {
                         console.error(
                           `Failed to load background image: ${slide.background_image}`
@@ -695,18 +685,6 @@ export function Carousel({ slides }: CarouselProps) {
   const [current, setCurrent] = useState(0);
   const [carouselSize, setCarouselSize] = useState(0);
   const [containerSize, setContainerSize] = useState(0);
-
-  // Debug: Log the slides data
-  useEffect(() => {
-    console.log("Carousel received slides:", slides);
-    slides.forEach((slide, i) => {
-      console.log(`Slide ${i}:`, {
-        src: slide.src,
-        id: slide.id,
-        analogy: slide.analogy?.title,
-      });
-    });
-  }, [slides]);
 
   // Create expanded slides array with blurred versions
   const titlePageSlide = {

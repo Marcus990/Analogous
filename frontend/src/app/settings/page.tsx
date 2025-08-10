@@ -432,14 +432,14 @@ export default function SettingsPage() {
                 document.getElementById('profile-section')?.scrollIntoView({ behavior: 'smooth' });
                 setActiveSection("profile");
               }}
-              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-md ${
+              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-lg ${
                 activeSection === "profile"
                   ? "text-white bg-purple-600 shadow-sm"
                   : "text-gray-400 hover:text-white hover:bg-white/10"
               }`}
             >
               <div className="flex items-center justify-center space-x-1 sm:space-x-2">
-                <IconUser size={14} className="sm:w-4 sm:h-4" />
+                <IconUser size={14} className="sm:w-5 sm:h-5" />
                 <span>Profile</span>
               </div>
             </button>
@@ -449,14 +449,14 @@ export default function SettingsPage() {
                 document.getElementById('security-section')?.scrollIntoView({ behavior: 'smooth' });
                 setActiveSection("security");
               }}
-              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-md ${
+              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-lg ${
                 activeSection === "security"
                   ? "text-white bg-blue-600 shadow-sm"
                   : "text-gray-400 hover:text-white hover:bg-white/10"
               }`}
             >
               <div className="flex items-center justify-center space-x-1 sm:space-x-2">
-                <IconLock size={14} className="sm:w-4 sm:h-4" />
+                <IconLock size={14} className="sm:w-5 sm:h-5" />
                 <span>Security</span>
               </div>
             </button>
@@ -466,14 +466,14 @@ export default function SettingsPage() {
                 document.getElementById('danger-section')?.scrollIntoView({ behavior: 'smooth' });
                 setActiveSection("danger");
               }}
-              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-md ${
+              className={`flex-1 px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-large transition-colors duration-200 text-sm sm:text-lg ${
                 activeSection === "danger"
                   ? "text-white bg-red-600 shadow-sm"
                   : "text-gray-400 hover:text-white hover:bg-white/10"
               }`}
             >
               <div className="flex items-center justify-center space-x-1 sm:space-x-2">
-                <IconTrash size={14} className="sm:w-4 sm:h-4" />
+                <IconTrash size={14} className="sm:w-5 sm:h-5" />
                 <span>Data</span>
               </div>
             </button>

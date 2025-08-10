@@ -64,13 +64,11 @@ export default function SharedAnalogyPage() {
 
   const handleShowOverlay = useCallback(
     (type: "carousel" | "text" | "learnMore") => {
-      console.log("handleShowOverlay called with type:", type);
       if (type === "carousel") {
         setShowCarousel(true);
       } else if (type === "text") {
         setShowText(true);
       } else if (type === "learnMore") {
-        console.log("Setting showLearnMore to true");
         setShowLearnMore(true);
         setActiveLearnMoreTab("text"); // Reset to text tab when opening
       }
@@ -361,8 +359,6 @@ export default function SharedAnalogyPage() {
         setAnalogy(data);
 
         // Debug: Log the analogy data and image URLs
-        console.log("Fetched shared analogy data:", data);
-        console.log("Analogy images:", data.analogy_images);
       } catch (err) {
         console.error("Error fetching shared analogy:", err);
         if (err instanceof Error) {
@@ -388,7 +384,6 @@ export default function SharedAnalogyPage() {
 
   // Reset the fetch flag when params.id changes
   useEffect(() => {
-    console.log("Analogy ID changed to:", params.id);
     hasFetchedAnalogy.current = false;
   }, [params.id]);
 
@@ -445,7 +440,7 @@ export default function SharedAnalogyPage() {
         controller.signal
       );
 
-      console.log("Successfully regenerated analogy:", newAnalogy);
+
 
       // Refresh streak data
       try {
@@ -459,7 +454,6 @@ export default function SharedAnalogyPage() {
       router.push(`/results/${newAnalogy.id}`);
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        console.log("Analogy regeneration was cancelled by user");
         // Don't show error message for user-initiated cancellation
       } else if (
         error instanceof Error &&
@@ -487,15 +481,9 @@ export default function SharedAnalogyPage() {
         });
       } else {
         console.error("Error regenerating analogy:", error);
-        console.log("Error type:", typeof error);
-        console.log("Error instanceof Error:", error instanceof Error);
-        console.log("Error message:", error instanceof Error ? error.message : "No message");
-        console.log("Full error object:", error);
         
         // Display the specific error message from the backend
         const errorMessage = error instanceof Error ? error.message : "Failed to regenerate analogy. Please try again.";
-        
-        console.log("Final error message to display:", errorMessage);
         
         const isSafety = /blocked by Gemini|inappropriate|override safety|policy/i.test(errorMessage);
         showNotification({
@@ -514,7 +502,6 @@ export default function SharedAnalogyPage() {
   const handleStopRegeneration = useCallback(() => {
     if (regenerateAbortController) {
       regenerateAbortController.abort();
-      console.log("Cancelling analogy regeneration...");
     }
     setIsRegenerating(false);
     setRegenerateAbortController(null);
@@ -657,15 +644,14 @@ export default function SharedAnalogyPage() {
             />
           </div>
 
-          {/* Learn More - takes 1 column */}
-          <div
-            onClick={() => {
-              console.log("Learn More clicked!");
-              handleShowOverlay("learnMore");
-            }}
-            className="cursor-pointer md:col-span-1"
-            style={{ pointerEvents: "auto" }}
-          >
+                      {/* Learn More - takes 1 column */}
+            <div
+              onClick={() => {
+                handleShowOverlay("learnMore");
+              }}
+              className="cursor-pointer md:col-span-1"
+              style={{ pointerEvents: "auto" }}
+            >
             <BentoGridItemResultsPage
               title="Learn More"
               description="Explore relevant real-world resources."
@@ -892,10 +878,6 @@ export default function SharedAnalogyPage() {
                             : undefined;
 
                           // Debug: Log the background image URL
-                          console.log("Background image URL:", {
-                            original: analogy.background_image,
-                            fullUrl: backgroundImageUrl,
-                          });
 
                           const slide = {
                             src: fullSrc,

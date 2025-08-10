@@ -72,17 +72,14 @@ export default function ResultsPage() {
 
   const handleShowOverlay = useCallback(
     (type: "carousel" | "text" | "learnMore" | "share") => {
-      console.log("handleShowOverlay called with type:", type);
       if (type === "carousel") {
         setShowCarousel(true);
       } else if (type === "text") {
         setShowText(true);
       } else if (type === "learnMore") {
-        console.log("Setting showLearnMore to true");
         setShowLearnMore(true);
         setActiveLearnMoreTab("text"); // Reset to text tab when opening
       } else if (type === "share") {
-        console.log("Setting showShare to true");
         setShowShare(true);
       }
       // Reset animation state after animation completes
@@ -408,7 +405,6 @@ export default function ResultsPage() {
 
       // Wait for authentication to load before proceeding
       if (authLoading) {
-        console.log("Auth is still loading, waiting...");
         return;
       }
 
@@ -421,16 +417,12 @@ export default function ResultsPage() {
         setIsPublic(data.is_public);
 
         // Debug: Log the analogy data and image URLs
-        console.log("Fetched analogy data:", data);
-        console.log("Analogy images:", data.analogy_images);
 
         // Gatekeeping: Check if the current user owns this analogy
         if (!user) {
           // User is not authenticated
-          console.log("User is not authenticated");
           if (data.is_public) {
             // If the analogy is public, redirect to the shared page
-            console.log("Analogy is public, redirecting to shared page");
             router.push(`/shared/${id}`);
             return;
           } else {
@@ -441,15 +433,9 @@ export default function ResultsPage() {
           }
         } else if (data.user_id !== user.id) {
           // User is authenticated but doesn't own this analogy
-          console.log(
-            "User does not own this analogy. Checking if they can access it."
-          );
-          console.log("Current user ID:", user.id);
-          console.log("Analogy owner ID:", data.user_id);
 
           // If the analogy is public, redirect to the shared page
           if (data.is_public) {
-            console.log("Analogy is public, redirecting to shared page");
             router.push(`/shared/${id}`);
             return;
           } else {
@@ -460,42 +446,22 @@ export default function ResultsPage() {
           }
         } else {
           // User owns this analogy - they should always be able to access the results page
-          console.log(
-            "User owns this analogy - allowing access to results page"
-          );
         }
 
         // Check if this analogy should show the streak popup
-        console.log("Checking streak popup conditions:");
-        console.log("  analogy ID:", data.id);
-        console.log("  streak_popup_shown from DB:", data.streak_popup_shown);
-        console.log("  user exists:", !!user);
-        console.log("  hasShownStreakModal:", hasShownStreakModal);
-
         // Only show streak popup if:
         // 1. User exists
         // 2. Popup hasn't been shown before for this analogy (streak_popup_shown is false)
         // 3. Haven't shown modal in this session yet
         const shouldShowPopup =
           user && data.streak_popup_shown === false && !hasShownStreakModal;
-        console.log("  should show popup:", shouldShowPopup);
 
         if (shouldShowPopup) {
-          console.log("Showing streak popup for analogy:", data.id);
           // Refresh streak data before showing the modal to ensure we have the latest data
           await refreshStreakData();
           // Show the streak modal for analogies that should show the popup
           setShowStreakModal(true);
           setHasShownStreakModal(true);
-        } else {
-          console.log("Not showing streak popup. Reasons:");
-          if (!user) console.log("  - no user");
-          if (data.streak_popup_shown !== false)
-            console.log(
-              "  - popup already shown before (streak_popup_shown is true)"
-            );
-          if (hasShownStreakModal)
-            console.log("  - already shown modal this session");
         }
       } catch (err) {
         console.error("Error fetching analogy:", err);
@@ -523,32 +489,22 @@ export default function ResultsPage() {
 
   // Reset the fetch flag when params.id changes
   useEffect(() => {
-    console.log("Analogy ID changed to:", params.id);
     hasFetchedAnalogy.current = false;
     // Reset the streak modal shown flag when analogy ID changes
     setHasShownStreakModal(false);
-    console.log("Reset hasShownStreakModal to false for new analogy");
   }, [params.id]);
 
   // Handle modal close and mark popup as shown
   const handleStreakModalClose = useCallback(async () => {
-    console.log("Streak modal closed for analogy:", analogy?.id);
     setShowStreakModal(false);
 
     // Mark the streak popup as shown in the database
     if (analogy && user) {
       try {
-        console.log(
-          "Marking streak popup as shown in database for analogy:",
-          analogy.id
-        );
         await api.markStreakPopupShown(analogy.id, user.id);
-        console.log("Successfully marked streak popup as shown");
       } catch (error) {
         console.error("Error marking streak popup as shown:", error);
       }
-    } else {
-      console.log("Cannot mark popup as shown - missing analogy or user");
     }
   }, [analogy, user]);
 
@@ -615,7 +571,6 @@ export default function ResultsPage() {
       router.push(`/results/${newAnalogy.id}`);
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        console.log("Analogy regeneration was cancelled by user");
         // Don't show error message for user-initiated cancellation
       } else if (
         error instanceof Error &&
@@ -656,21 +611,12 @@ export default function ResultsPage() {
         });
       } else {
         console.error("Error regenerating analogy:", error);
-        console.log("Error type:", typeof error);
-        console.log("Error instanceof Error:", error instanceof Error);
-        console.log(
-          "Error message:",
-          error instanceof Error ? error.message : "No message"
-        );
-        console.log("Full error object:", error);
 
         // Display the specific error message from the backend
         const errorMessage =
           error instanceof Error
             ? error.message
             : "Failed to regenerate analogy. Please try again.";
-
-        console.log("Final error message to display:", errorMessage);
 
         const isSafety =
           /blocked by Gemini|inappropriate|override safety|policy/i.test(
@@ -692,7 +638,6 @@ export default function ResultsPage() {
   const handleStopRegeneration = useCallback(() => {
     if (regenerateAbortController) {
       regenerateAbortController.abort();
-      console.log("Cancelling analogy regeneration...");
     }
     setIsRegenerating(false);
     setRegenerateAbortController(null);
@@ -842,7 +787,6 @@ export default function ResultsPage() {
             {/* Learn More - takes 1 column */}
             <div
               onClick={() => {
-                console.log("Learn More clicked!");
                 handleShowOverlay("learnMore");
               }}
               className="cursor-pointer md:col-span-1"
@@ -1032,10 +976,6 @@ export default function ResultsPage() {
                               : undefined;
 
                             // Debug: Log the background image URL
-                            console.log("Background image URL:", {
-                              original: analogy.background_image,
-                              fullUrl: backgroundImageUrl,
-                            });
 
                             const slide = {
                               src: fullSrc,

@@ -1,0 +1,42 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://analogous.app/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 1
+
+# Allow all major search engines
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# Block access to admin/private areas
+Disallow: /api/
+Disallow: /_next/
+Disallow: /admin/
+Disallow: /private/
+
+# Allow important pages
+Allow: /
+Allow: /home
+Allow: /about
+Allow: /pricing
+Allow: /login
+Allow: /signup
+Allow: /dashboard
+Allow: /results
+Allow: /shared
+Allow: /past-analogies
+Allow: /settings
+Allow: /privacy
+Allow: /terms

@@ -122,13 +122,11 @@ export default function PastAnalogiesPage() {
   const fetchUserAnalogies = async () => {
     try {
       setLoadingAnalogies(true);
-      console.log("Fetching paginated analogies for user:", user!.id, "page:", currentPage);
       const response: PaginatedAnalogiesResponse = await api.getUserAnalogiesPaginated(
         user!.id,
         currentPage,
         pageSize
       );
-      console.log("API response:", response);
       setAnalogies(response.analogies);
       setTotalCount(response.total_count);
       setTotalPages(response.total_pages);
@@ -170,8 +168,6 @@ export default function PastAnalogiesPage() {
       
       // Refresh the current page to get updated data
       await fetchUserAnalogies();
-      
-      console.log("Analogy deleted successfully");
     } catch (err) {
       console.error("Error deleting analogy:", err);
       showNotification({
@@ -439,7 +435,7 @@ export default function PastAnalogiesPage() {
                             <h3 className="text-lg sm:text-xl font-bold text-white mb-2 line-clamp-2">
                               {analogy.analogy_json.title}
                             </h3>
-                            <p className="text-xs sm:text-sm text-gray-400">
+                            <p className="line-clamp-3 text-xs sm:text-sm text-gray-400">
                               Explain {analogy.topic} like I'm a{" "}
                               {analogy.audience}
                             </p>
