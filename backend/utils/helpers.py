@@ -650,7 +650,8 @@ async def check_email_uniqueness(email: str) -> dict:
             auth_result = supabase_client.auth.admin.list_users()
             
             # Check if any user in the auth system has this email (including unverified users)
-            for user in auth_result.users:
+            # auth_result is a list directly, not an object with .users attribute
+            for user in auth_result:
                 if user.email and user.email.lower() == email.lower():
                     # If user exists in auth but not in user_information, they're likely still verifying
                     return {"available": False, "error": "This email is already being used for account verification"}
