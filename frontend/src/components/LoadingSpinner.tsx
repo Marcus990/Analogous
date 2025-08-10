@@ -40,7 +40,7 @@ export function ButtonSpinner({ color = "white", className = "" }: Omit<LoadingS
 
 // All page-level spinners now use the same size (lg) for consistency
 export function PageSpinner({ color = "purple", className = "" }: Omit<LoadingSpinnerProps, "size">) {
-  return <LoadingSpinner size="lg" color={color} className={className} />;
+  return <LoadingSpinner size="xl" color={color} className={className} />;
 }
 
 export function ComponentSpinner({ color = "purple", className = "" }: Omit<LoadingSpinnerProps, "size">) {

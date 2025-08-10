@@ -17,6 +17,7 @@ const config: Config = {
     },
   },
   plugins: [
+    require('@tailwindcss/line-clamp'),
     plugin(function ({ addUtilities }) {
       const newUtilities = {
         '.text-stroke': {

@@ -657,7 +657,7 @@ export default function Home() {
 
               <div
                 ref={workspaceRef}
-                className="rounded-lg border border-white/10 bg-white/5 my-4 sm:my-6 relative overflow-visible"
+                className="rounded-lg border border-white/10 bg-white/5 my-8 sm:my-10 relative overflow-visible"
                 style={{ minHeight: `${workspaceHeight}px` }}
               >
                 <div
