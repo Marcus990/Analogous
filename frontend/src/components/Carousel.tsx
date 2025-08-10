@@ -215,14 +215,14 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
 
   const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
     console.warn(`Failed to load image: ${event.currentTarget.src}`);
-    
+
     // Get the appropriate fallback image based on the slide index
     let fallbackImage = "/static/assets/default_image0.jpeg"; // Default fallback
-    
+
     // Map slide indices to fallback images
     // This matches the backend's fallback mapping:
     // - Slides 1 & 2 (indices 1,2) → default_image0.jpeg
-    // - Slides 3 & 4 (indices 3,4) → default_image1.jpeg  
+    // - Slides 3 & 4 (indices 3,4) → default_image1.jpeg
     // - Slides 5 & 6 (indices 5,6) → default_image2.jpeg
     if (index === 1 || index === 2) {
       fallbackImage = "/static/assets/default_image0.jpeg";
@@ -231,29 +231,38 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
     } else if (index === 5 || index === 6) {
       fallbackImage = "/static/assets/default_image2.jpeg";
     }
-    
+
     // Convert to full backend URL
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const fullFallbackUrl = `${backendUrl}${fallbackImage}`;
-    
+
     // Set the fallback image
     event.currentTarget.src = fullFallbackUrl;
   };
 
-  const handleTitlePageImageError = (event: React.SyntheticEvent<HTMLImageElement>, imgIndex: number) => {
-    console.warn(`Failed to load title page image ${imgIndex}: ${event.currentTarget.src}`);
-    
+  const handleTitlePageImageError = (
+    event: React.SyntheticEvent<HTMLImageElement>,
+    imgIndex: number
+  ) => {
+    console.warn(
+      `Failed to load title page image ${imgIndex}: ${event.currentTarget.src}`
+    );
+
     // Map imgIndex to fallback images for title page
     // imgIndex 0 → default_image0.jpeg
     // imgIndex 1 → default_image1.jpeg
     // imgIndex 2 → default_image2.jpeg
     const fallbackImage = `/static/assets/default_image${imgIndex}.jpeg`;
-    
+
     // Convert to full backend URL
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const backendUrl =
+      process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
     const fullFallbackUrl = `${backendUrl}${fallbackImage}`;
-    
-    console.log(`Using fallback for title page image ${imgIndex}: ${fullFallbackUrl}`);
+
+    console.log(
+      `Using fallback for title page image ${imgIndex}: ${fullFallbackUrl}`
+    );
     event.currentTarget.src = fullFallbackUrl;
   };
 
@@ -265,7 +274,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
     const html = sanitized.replace(
       /\*\*(.*?)\*\*/g,
       (_, match) =>
-        `<span class="${styles['bold-markdown-text']}">${match}</span>`
+        `<span class="${styles["bold-markdown-text"]}">${match}</span>`
     );
 
     return html;
@@ -297,7 +306,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
         }}
       >
         {/* <BackgroundGradient containerClassName="absolute top-0 left-0 w-full h-full rounded-lg overflow-hidden p-1"> */}
-          <div className="relative w-full h-full rounded-xl border-white border-2 md:border-[0.25rem]">
+        <div className="relative w-full h-full rounded-xl border-white border-2 md:border-[0.25rem]">
           <div className="relative w-full h-full rounded-xl border-black border-2 md:border-[0.25rem] z-[999]">
             {slide.isTitlePage ? (
               // Title page layout
@@ -310,13 +319,18 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                       alt="Comic background"
                       className="w-full h-full object-cover"
                       onLoad={() => {
-                        console.log(`Successfully loaded background image: ${slide.background_image}`);
+                        console.log(
+                          `Successfully loaded background image: ${slide.background_image}`
+                        );
                       }}
                       onError={(e) => {
-                        console.error(`Failed to load background image: ${slide.background_image}`);
+                        console.error(
+                          `Failed to load background image: ${slide.background_image}`
+                        );
                         // Fallback to gray gradient if background image fails to load
-                        e.currentTarget.style.display = 'none';
-                        e.currentTarget.parentElement!.style.background = 'linear-gradient(to right, #111827, #4B5563)';
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.parentElement!.style.background =
+                          "linear-gradient(to right, #111827, #4B5563)";
                       }}
                     />
                   </div>
@@ -369,8 +383,8 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                   </>
                 )}
 
-                {/* Top Purple Bar with Issue Box + Author */}
-                <div className="w-full h-8 sm:h-10 bg-white border-black border-t-2 border-b-2 flex items-center px-2 sm:px-4 mt-[3%] sm:mt-[5%] z-10 tracking-wider">
+                {/* Top White Bar with Issue Box + Author */}
+                <div className="w-full h-7 sm:h-10 bg-white border-black border-t-2 border-b-2 flex items-center px-1 sm:px-4 mt-[3%] sm:mt-[5%] z-10 tracking-wider">
                   <div className="flex items-center gap-2 sm:gap-4 md:gap-8 w-full">
                     {/* Top Left Sharp Box for Issue & Price */}
                     <div className="bg-white border border-black sm:border-2 rounded-md px-2 sm:px-3 md:px-4 py-1 text-[8px] sm:text-[10px] md:text-lg font-[NewComicTitleLaserRegular] text-black flex-shrink-0">
@@ -390,17 +404,25 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
                     </div>
 
                     {/* "By Analogous" text */}
-                    <p className="text-sm sm:text-lg md:text-xl text-black font-[NewComicTitleLaserRegular] tracking-widest flex-1 text-center">
+                    <p className="text-xs sm:text-lg md:text-xl text-black font-[NewComicTitleLaserRegular] tracking-widest flex-1 text-center">
                       By Analogous
                     </p>
                   </div>
                 </div>
 
                 {/* Middle Section - Title */}
-                <div className="flex-1 flex items-center justify-center px-2 sm:px-4 md:px-6 lg:px-8 relative z-[999]">
-                  <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl font-[NewComicTitleExpanded] text-black text-bold text-stroke text-stroke-1 md:text-stroke-2 leading-tight transform rotate-[-5deg] w-[95%] sm:w-[90%] text-center">
-                    {slide.analogy.title || "Analogous Comics Series"}
-                  </h1>
+                <div className="flex-1 flex items-center justify-center px-2 sm:px-4 md:px-6 lg:px-8 relative z-[999] min-w-0">
+                  <div className="rotate-[-5deg] max-w-[90%] sm:max-w-[85%]">
+                    <h1
+                      className="line-clamp-3 min-w-0 w-full text-center mx-auto
+                   pr-3
+                   text-4xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl
+                   font-[NewComicTitleExpanded] text-black font-bold
+                   text-stroke text-stroke-1 leading-tight"
+                    >
+                      {slide.analogy.title || "Analogous Comics Series"}
+                    </h1>
+                  </div>
                 </div>
 
                 {/* Bottom Section - 3 Photos */}
@@ -634,7 +656,7 @@ const Slide = ({ slide, index, current, handleSlideClick }: SlideProps) => {
               </>
             )}
           </div>
-          </div>
+        </div>
         {/* </BackgroundGradient> */}
       </li>
     </div>
@@ -681,7 +703,7 @@ export function Carousel({ slides }: CarouselProps) {
       console.log(`Slide ${i}:`, {
         src: slide.src,
         id: slide.id,
-        analogy: slide.analogy?.title
+        analogy: slide.analogy?.title,
       });
     });
   }, [slides]);
@@ -695,9 +717,7 @@ export function Carousel({ slides }: CarouselProps) {
     originalSlides: slides, // Pass the original slides data to the title page
     background_image: slides[0].background_image, // Pass background image to title page
   };
-  
 
-  
   const expandedSlides = [
     // Title page (comic book cover style)
     titlePageSlide,
