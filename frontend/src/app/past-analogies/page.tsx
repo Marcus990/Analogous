@@ -102,6 +102,12 @@ export default function PastAnalogiesPage() {
 
   useEffect(() => {
     if (!loading && !user) {
+      showNotification({
+        title: "Authentication Required",
+        message: "Please log in to continue.",
+        type: "error",
+        confirmText: "OK",
+      });
       router.push("/login");
       return;
     }

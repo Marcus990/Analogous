@@ -496,10 +496,11 @@ export default function SharedAnalogyPage() {
         
         console.log("Final error message to display:", errorMessage);
         
+        const isSafety = /blocked by Gemini|inappropriate|override safety|policy/i.test(errorMessage);
         showNotification({
-          title: "Regeneration Failed",
+          title: isSafety ? "Safety Warning" : "Regeneration Failed",
           message: errorMessage,
-          type: "error",
+          type: isSafety ? "warning" : "error",
           confirmText: "OK",
         });
       }
@@ -572,7 +573,7 @@ export default function SharedAnalogyPage() {
               duration={3000}
               containerClassName="w-auto h-auto"
               borderClassName="bg-[radial-gradient(#0ea5e9_40%,transparent_60%)] opacity-90 blur-sm"
-              className="min-w-[240px] px-8 py-3 rounded-lg font-medium transition bg-purple-700 hover:bg-purple-800 border border-purple-500/50 text-white shadow-md text-base"
+              className="min-w-[240px] px-8 py-5 rounded-lg font-medium transition bg-purple-700 hover:bg-purple-800 border border-purple-500/50 text-white shadow-md text-base"
             >
               Generate New Analogy
             </MovingBorderButton>
@@ -698,7 +699,7 @@ export default function SharedAnalogyPage() {
             <button
               onClick={user ? handleGenerateNew : () => router.push('/login')}
               disabled={isRegenerating}
-              className="min-w-[240px] px-8 py-4 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="min-w-[240px] px-8 py-5 rounded-lg font-medium text-base leading-none transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {user ? "Generate New Analogy" : "Login to Generate New Analogy"}
             </button>
@@ -707,7 +708,7 @@ export default function SharedAnalogyPage() {
             {isRegenerating && (
               <button
                 onClick={handleStopRegeneration}
-                className="w-12 h-12 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
+                className="w-14 h-14 rounded-lg font-medium transition bg-purple-800 hover:bg-purple-700 border border-purple-500/50 text-white shadow-md flex items-center justify-center"
                 title="Stop Regeneration"
               >
                 <IconSquare className="w-5 h-5" />

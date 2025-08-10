@@ -53,6 +53,12 @@ export default function PrivatePricingPage() {
 
   useEffect(() => {
     if (!loading && !user) {
+      showNotification({
+        title: "Authentication Required",
+        message: "Please log in to continue.",
+        type: "error",
+        confirmText: "OK",
+      });
       router.replace("/login");
       return;
     }
