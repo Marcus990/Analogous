@@ -1025,6 +1025,8 @@ async def sign_up_user(request: Request, payload: SignUpRequest):
     else:
         print("No captcha token provided for signup")
     
+    signup_options["options"] = options
+    
     try:
         response = supabase_client.auth.sign_up(signup_options)
 
