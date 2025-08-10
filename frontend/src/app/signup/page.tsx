@@ -161,7 +161,7 @@ export default function SignUp() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-gray-300 text-base sm:text-lg"
+            className="text-gray-300 text-base sm:text-lg leading-relaxed"
           >
             Create compelling analogies with the help of AI
           </motion.p>

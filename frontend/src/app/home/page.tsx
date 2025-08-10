@@ -58,13 +58,13 @@ export default function HomePage() {
               Simplify complex topics, reduce learning barriers, and understand with confidence.
             </p>
 
-            <div className="relative">
+            {/* <div className="relative">
               <div className="inline-block bg-gradient-to-r from-purple-500/20 to-blue-600/20 backdrop-blur-sm rounded-2xl border border-purple-500/30 px-8 py-4">
                 <p className="text-white text-xl sm:text-2xl md:text-3xl font-[PlantinMTProSemiBold]">
                   "No learner left behind"
                 </p>
               </div>
-            </div>
+            </div> */}
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
               <MovingBorderButton
