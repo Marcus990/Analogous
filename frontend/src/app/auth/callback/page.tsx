@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { ComponentSpinner, LoadingMessage } from "@/components/LoadingSpinner";
 
-export default function AuthCallback() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
@@ -14,11 +14,18 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        console.log("Auth callback initiated");
+        console.log("Current URL:", window.location.href);
+        console.log("Search params:", searchParams.toString());
+        
         // Get the next parameter for where to redirect after successful auth
         const next = searchParams.get("next") || "/";
+        console.log("Redirect target:", next);
         
         // Check if we have a hash fragment (which contains the auth code)
         if (typeof window !== "undefined" && window.location.hash) {
+          console.log("Hash fragment found:", window.location.hash);
+          
           // Exchange the code for a session
           const { data, error } = await supabase.auth.exchangeCodeForSession(
             window.location.href
@@ -75,9 +82,24 @@ export default function AuthCallback() {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="text-center">
-        <ComponentSpinner className="mx-auto" />
+        <ComponentSpinner className="mx-auto mb-4" />
         <LoadingMessage message="Verifying Your Email..." />
       </div>
     </div>
+  );
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <ComponentSpinner className="mx-auto mb-4" />
+          <LoadingMessage message="Loading..." />
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
