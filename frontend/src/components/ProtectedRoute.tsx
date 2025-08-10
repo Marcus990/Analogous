@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import ProfileCompletionGuard from "./ProfileCompletionGuard";
+import { useNotification } from "@/lib/notificationContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -19,16 +20,27 @@ export default function ProtectedRoute({
   const { user, loading } = useAuth();
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
+  const { showNotification } = useNotification();
+  const [notified, setNotified] = useState(false);
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
+        if (!notified) {
+          showNotification({
+            title: "Authentication Required",
+            message: "Please log in to continue.",
+            type: "error",
+            confirmText: "OK",
+          });
+          setNotified(true);
+        }
         router.push('/login');
       } else {
         setIsChecking(false);
       }
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, showNotification, notified]);
 
   // Show loading while checking authentication
   if (loading || isChecking) {
